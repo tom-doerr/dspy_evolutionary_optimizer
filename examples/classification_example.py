@@ -1,8 +1,8 @@
-"""
-Example of using the FullyEvolutionaryPromptOptimizer for a classification task.
+"""Example of using the FullyEvolutionaryPromptOptimizer for a classification task.
 """
 
 import dspy
+
 from evoprompt import FullyEvolutionaryPromptOptimizer
 from evoprompt.visualization import plot_evolution_history
 
