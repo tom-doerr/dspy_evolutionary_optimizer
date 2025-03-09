@@ -45,7 +45,11 @@ class TestFullyEvolutionaryPromptOptimizer:
 
     def test_compile_basic_functionality(self, simple_program, simple_trainset, mock_metric):
         """Test basic compilation functionality."""
-        optimizer = FullyEvolutionaryPromptOptimizer(mock_metric, max_inference_calls=10)
+        # Configure mock LM
+        lm = dspy.LM('mock', cache=False)
+        dspy.configure(lm=lm)
+        
+        optimizer = FullyEvolutionaryPromptOptimizer(mock_metric, max_inference_calls=10, use_mock=True)
         optimized_program = optimizer.compile(simple_program, simple_trainset)
         
         assert optimized_program is not None
@@ -54,10 +58,15 @@ class TestFullyEvolutionaryPromptOptimizer:
 
     def test_population_management(self, simple_program, simple_trainset, mock_metric):
         """Test population management and evolution."""
+        # Configure mock LM
+        lm = dspy.LM('mock', cache=False)
+        dspy.configure(lm=lm)
+        
         optimizer = FullyEvolutionaryPromptOptimizer(
             mock_metric,
             max_population=5,
-            max_inference_calls=10
+            max_inference_calls=10,
+            use_mock=True
         )
         
         # Run compilation and check history
@@ -134,7 +143,11 @@ class TestFullyEvolutionaryPromptOptimizer:
 
     def test_progress_logging(self, mock_metric, capsys):
         """Test progress logging functionality."""
-        optimizer = FullyEvolutionaryPromptOptimizer(mock_metric, debug=True)
+        # Configure mock LM
+        lm = dspy.LM('mock', cache=False)
+        dspy.configure(lm=lm)
+        
+        optimizer = FullyEvolutionaryPromptOptimizer(mock_metric, debug=True, use_mock=True)
         
         population = [
             {"prompt": "prompt1", "score": 0.8, "last_used": 1},
