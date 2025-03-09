@@ -15,7 +15,7 @@ def mock_metric() -> Callable[[Any, Any], float]:
     return metric
 
 
-def test_parallel_evaluation(_mock_metric: Callable[[Any, Any], float]) -> None:
+def test_parallel_evaluation(mock_metric: Callable[[Any, Any], float]) -> None:
     # Test normal case
     optimizer = FullyEvolutionaryPromptOptimizer(metric=mock_metric, max_workers=2)
     signature = dspy.Signature("text -> label")
@@ -53,7 +53,7 @@ def test_parallel_evaluation(_mock_metric: Callable[[Any, Any], float]) -> None:
     assert 0 <= score <= 1.0
 
 
-def test_mock_prediction(_mock_metric: Callable[[Any, Any], float]) -> None:
+def test_mock_prediction(mock_metric: Callable[[Any, Any], float]) -> None:
     # Test basic mock prediction
     optimizer = FullyEvolutionaryPromptOptimizer(metric=mock_metric)
     optimizer.config.use_mock = True  # Set mock mode through config
@@ -93,7 +93,7 @@ def test_mock_prediction(_mock_metric: Callable[[Any, Any], float]) -> None:
     assert isinstance(pred.label, str)
 
 
-def test_evolution_history(_mock_metric: Callable[[Any, Any], float]) -> None:
+def test_evolution_history(mock_metric: Callable[[Any, Any], float]) -> None:
     optimizer = FullyEvolutionaryPromptOptimizer(metric=mock_metric)
     population = optimizer._initialize_population()
     optimizer._log_progress(1, population)
@@ -132,7 +132,7 @@ def test_evolution_history(_mock_metric: Callable[[Any, Any], float]) -> None:
 
 
 def test_parallel_execution_edge_cases(
-    _mock_metric: Callable[[Any, Any], float],
+    mock_metric: Callable[[Any, Any], float],
 ) -> None:
     """Test edge cases in parallel execution."""
     optimizer = FullyEvolutionaryPromptOptimizer(metric=_mock_metric, max_workers=2)

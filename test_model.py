@@ -53,8 +53,14 @@ def main() -> None:
 def test_model_error_handling():
     """Test error handling in model interactions."""
     # Test invalid model name
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Invalid model name"):
         dspy.LM("invalid/model/name")
+
+    # Test connection timeout
+    lm = dspy.LM("openrouter/google/gemini-2.0-flash-001")
+    dspy.settings.configure(lm=lm, cache=False, timeout=0.001)  # Set very low timeout
+    with pytest.raises(TimeoutError, match="Request timed out"):
+        lm("Test message")
 
     # Test connection timeout with more specific exception
     lm = dspy.LM("openrouter/google/gemini-2.0-flash-001")
@@ -96,9 +102,20 @@ def test_model_error_handling():
 
 def test_predictor_error_handling():
     """Test error handling in DSPy Predict."""
-    # Test invalid signature with more specific error message
+    # Test invalid signature
     with pytest.raises(TypeError, match="signature must be a dspy.Signature"):
         dspy.Predict(None)
+
+    # Test invalid input
+    signature = dspy.Signature("text -> response")
+    signature.__doc__ = "Given text, generate a response"
+    predictor = dspy.Predict(signature)
+    with pytest.raises(TypeError, match="Input must be a dictionary"):
+        predictor(None)
+    
+    # Test missing required input field
+    with pytest.raises(ValueError, match="Missing required input field 'text'"):
+        predictor({})
     # Test invalid input
     signature = dspy.Signature("text -> response")
     signature.__doc__ = "Given text, generate a response"
