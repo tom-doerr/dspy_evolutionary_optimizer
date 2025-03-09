@@ -37,6 +37,22 @@ def configured_optimizer(mock_metric):
         debug=True
     )
 
+@pytest.fixture
+def parallel_optimizer(mock_metric):
+    """Fixture providing an optimizer configured for parallel execution."""
+    return FullyEvolutionaryPromptOptimizer(
+        metric=mock_metric,
+        max_workers=2
+    )
+
+@pytest.fixture
+def mock_optimizer(mock_metric):
+    """Fixture providing an optimizer configured for mock mode."""
+    return FullyEvolutionaryPromptOptimizer(
+        metric=mock_metric,
+        use_mock=True
+    )
+
 
 def test_optimizer_initialization(configured_optimizer):
     """Test basic optimizer initialization."""
