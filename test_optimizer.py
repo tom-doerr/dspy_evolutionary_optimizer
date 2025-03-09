@@ -244,17 +244,35 @@ class TestFullyEvolutionaryPromptOptimizer:
 
     def test_mock_prediction(self, simple_program, mock_metric):
         """Test mock prediction creation."""
-        optimizer = FullyEvolutionaryPromptOptimizer(mock_metric, use_mock=True)
+        optimizer = FullyEvolutionaryPromptOptimizer(
+            mock_metric, 
+            use_mock=True,
+            debug=True,
+            max_inference_calls=1
+        )
         
+        # Test initial real prediction
         example = dspy.Example(input="test", output="result")
-        prediction = optimizer._create_mock_prediction(
-            simple_program.signature,
+        prediction = optimizer._make_single_prediction(
+            simple_program,
             {"input": "test"},
             example
         )
+        assert hasattr(prediction, 'output')
         
+        # Test mock prediction after limit
+        prediction = optimizer._make_single_prediction(
+            simple_program,
+            {"input": "test"},
+            example
+        )
         assert hasattr(prediction, 'output')
         assert prediction.output == "result"
+        
+        # Verify debug output
+        captured = capsys.readouterr()
+        assert "Mock prediction took" in captured.out
+        assert "Prediction result" in captured.out
 
     def test_evaluation(self, simple_program, simple_trainset, mock_metric):
         """Test prompt evaluation functionality."""

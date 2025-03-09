@@ -497,18 +497,36 @@ class FullyEvolutionaryPromptOptimizer:
 
     def _make_single_prediction(self, predictor, input_kwargs, example):
         """Make a single prediction handling mock mode and inference limits."""
-        if self.use_mock:
+        start_time = time.time()
+        
+        if self.use_mock or (self.max_inference_calls > 0 and self.inference_count >= self.max_inference_calls):
+            if self.debug and not self.use_mock:
+                print("  Inference call limit reached, using mock prediction")
+            
+            # Simulate realistic API latency between 0.1-0.5 seconds
+            latency = random.uniform(0.1, 0.5)
+            time.sleep(latency)
+            
             pred = self._create_mock_prediction(predictor.signature, input_kwargs, example)
-            time.sleep(0.1)  # Simulate API latency
+            
+            if self.debug:
+                elapsed = time.time() - start_time
+                print(f"  Mock prediction took {elapsed:.4f}s")
+                print(f"  Prediction result: {pred}")
+            
             return pred
 
-        if self.max_inference_calls > 0 and self.inference_count >= self.max_inference_calls:
-            if self.debug:
-                print("  Inference call limit reached, using mock prediction")
-            return self._create_mock_prediction(predictor.signature, input_kwargs, example)
-
+        # Make real prediction
         pred = predictor(**input_kwargs)
         self.inference_count += 1
+        
+        if self.debug:
+            elapsed = time.time() - start_time
+            print(f"  Real prediction took {elapsed:.4f}s")
+            if elapsed < 0.05:
+                print("  WARNING: Prediction was extremely fast - verify LLM is being called")
+            print(f"  Prediction result: {pred}")
+            
         return pred
 
     def _make_predictions(self, program, prompt, trainset):
