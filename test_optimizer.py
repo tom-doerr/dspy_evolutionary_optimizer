@@ -74,6 +74,32 @@ def test_optimizer_with_mock_mode(metric_fixture: Callable[[Any, Any], float]) -
 
 
 def test_parameter_validation(metric_fixture: Callable[[Any, Any], float]) -> None:
+    # Test valid parameters
+    optimizer = FullyEvolutionaryPromptOptimizer(
+        metric=metric_fixture,
+        generations=5,
+        mutation_rate=0.5,
+        growth_rate=0.3,
+        max_population=20,
+        debug=True,
+        use_mock=True
+    )
+    assert optimizer.config.generations == 5
+    assert optimizer.config.mutation_rate == 0.5
+    assert optimizer.config.use_mock is True
+
+    # Test edge cases
+    optimizer = FullyEvolutionaryPromptOptimizer(
+        metric=metric_fixture,
+        generations=1,
+        mutation_rate=0.0,
+        growth_rate=0.0,
+        max_population=1,
+        debug=False,
+        use_mock=False
+    )
+    assert optimizer.config.generations == 1
+    assert optimizer.config.mutation_rate == 0.0
     # Test invalid metric
     with pytest.raises(TypeError):
         FullyEvolutionaryPromptOptimizer("not_a_function")

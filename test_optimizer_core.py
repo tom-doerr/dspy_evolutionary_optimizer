@@ -52,7 +52,8 @@ def test_parallel_evaluation(mock_metric: Callable[[Any, Any], float]) -> None:
 
 def test_mock_prediction(mock_metric: Callable[[Any, Any], float]) -> None:
     # Test basic mock prediction
-    optimizer = FullyEvolutionaryPromptOptimizer(metric=mock_metric, use_mock=True)
+    optimizer = FullyEvolutionaryPromptOptimizer(metric=mock_metric)
+    optimizer.config.use_mock = True  # Set mock mode through config
     signature = dspy.Signature("text -> label", "Given text, generate a label")
     example = dspy.Example(text="Great product!", label="positive")
     pred = optimizer._create_mock_prediction(signature, {"text": "test"}, example)
