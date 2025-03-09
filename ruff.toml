@@ -63,12 +63,12 @@ lines-between-types = 1
 max-complexity = 5  # McCabe cyclomatic complexity
 
 [lint.pylint]
-max-args = 6        # Maximum number of function arguments
+max-args = 3        # Maximum number of function arguments
 max-locals = 15     # Maximum number of local variables
 max-statements = 50 # Maximum number of statements per function
 max-branches = 12   # Maximum number of branches per function
-max-returns = 6     # Maximum number of return statements
-max-attributes = 7  # Maximum number of class attributes
+max-returns = 4     # Maximum number of return statements
+max-attributes = 5  # Maximum number of class attributes
 
 [lint.ruff]
 # Enable additional Ruff-specific rules
