@@ -53,7 +53,7 @@ def main() -> None:
 def test_model_error_handling():
     """Test error handling in model interactions."""
     # Test invalid model name
-    with pytest.raises((ValueError, RuntimeError)):
+    with pytest.raises(ValueError):
         dspy.LM("invalid/model/name")
     # Test connection timeout
     lm = dspy.LM("openrouter/google/gemini-2.0-flash-001")
@@ -91,7 +91,7 @@ def test_model_error_handling():
 def test_predictor_error_handling():
     """Test error handling in DSPy Predict."""
     # Test invalid signature
-    with pytest.raises((TypeError, ValueError)):
+    with pytest.raises(TypeError):
         dspy.Predict(None)
     # Test invalid input
     signature = dspy.Signature("text -> response")

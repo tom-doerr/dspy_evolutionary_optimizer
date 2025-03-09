@@ -37,7 +37,7 @@ def mock_signature() -> dspy.Signature:
     return signature
 
 
-def test_optimizer_initialization(_mock_metric: Callable[[Any, Any], float]) -> None:
+def test_optimizer_initialization(mock_metric: Callable[[Any, Any], float]) -> None:
     """Test optimizer initialization with various parameters."""
     optimizer = FullyEvolutionaryPromptOptimizer(
         metric=_mock_metric,
