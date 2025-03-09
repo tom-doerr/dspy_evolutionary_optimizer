@@ -1,9 +1,10 @@
-"""
-Simple test script to verify that the language model is working.
+"""Simple test script to verify that the language model is working.
 """
 
-import dspy
 import time
+
+import dspy
+
 
 def main():
     print("Testing direct model access...")
