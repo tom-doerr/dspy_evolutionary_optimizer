@@ -1,6 +1,64 @@
 [lint]
-select = ["E", "W", "F", "I", "B", "C", "A", "N", "UP", "YTT", "RUF"]
-ignore = ["E501", "E203", "N802", "N803", "N806", "W293"]
+select = [
+    # Error checking
+    "E",  # Pycodestyle errors
+    "F",  # Pyflakes errors
+    
+    # Style
+    "C4",  # Flake8 comprehensions
+    "I",   # isort (import sorting)
+    "UP",  # pyupgrade (modern Python features)
+    "W",   # Pycodestyle warnings
+    
+    # Best practices
+    "B",   # flake8-bugbear
+    "A",   # flake8-builtins
+    "D",   # pydocstyle (docstrings)
+    "S",   # flake8-bandit (security)
+    "TCH", # flake8-type-checking
+    "SIM", # flake8-simplify
+    "RUF", # Ruff-specific rules
+    
+    # Complexity
+    "C90", # McCabe complexity
+]
 
+# Keep existing ignores but add more reasonable ones
+ignore = [
+    "E501",  # Line too long (handled by formatter)
+    "E203",  # Whitespace before ':' (conflicts with black)
+    "N802",  # Function name should be lowercase
+    "N803",  # Argument name should be lowercase  
+    "N806",  # Variable in function should be lowercase
+    "W293",  # Blank line contains whitespace
+    "D107",  # Missing docstring in __init__
+]
+
+[lint.per-file-ignores]
+"tests/*" = ["D"]  # Don't require docstrings in tests
+
+[lint.flake8-comprehensions]
+allow_dict_comprehensions = true
+allow_list_comprehensions = true
+allow_set_comprehensions = true
+
+[lint.flake8-bugbear]
+extend-immutable-calls = ["frozenset", "tuple"]
+
+[lint.isort]
+known_first_party = ["evoprompt"]
+combine_as_imports = true
+force_sort_within_sections = true
+order_by_type = false
+lines_after_imports = 2
+lines_between_types = 1
+
+# Slightly more generous complexity limit
 [lint.mccabe]
-max-complexity = 5
+max-complexity = 10
+
+[format]
+quote-style = "double"
+indent-style = "space"
+line-length = 88
+skip-magic-trailing-comma = true
