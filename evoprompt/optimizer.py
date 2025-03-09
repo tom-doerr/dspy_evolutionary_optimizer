@@ -646,12 +646,12 @@ class FullyEvolutionaryPromptOptimizer:
 
         return sum(scores) / len(scores) if scores else 0.0
 
-    def _evaluate(self, program, prompt, trainset):
-        """Evaluate a prompt's performance on the training set.
+    def _evaluate(self, program, chromosome, trainset):
+        """Evaluate a chromosome's performance on the training set.
         
         Args:
             program: DSPy program to evaluate
-            prompt: Prompt template to evaluate
+            chromosome: Chromosome containing task and mutation parts
             trainset: Examples to use for evaluation
             
         Returns:
@@ -659,8 +659,9 @@ class FullyEvolutionaryPromptOptimizer:
 
         """
         try:
+            prompt = chromosome.to_prompt()
             if self.debug:
-                print(f"\nEvaluating prompt: '{prompt}'")
+                print(f"\nEvaluating chromosome:\nTask: {chromosome.task_parts}\nMutation: {chromosome.mutation_parts}")
 
             if self.max_workers > 1:
                 return self._parallel_evaluate(program, prompt, trainset)
