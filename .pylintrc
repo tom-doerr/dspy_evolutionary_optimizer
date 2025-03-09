@@ -19,3 +19,12 @@ max-attributes=10
 max-public-methods=20
 max-parents=7
 
+# Complexity settings
+max-complexity=10
+min-public-methods=1
+min-similarity-lines=4
+
+[METRICS]
+# Enable complexity metrics
+compute-complexity=yes
+
