@@ -29,9 +29,7 @@ class OptimizerConfig:
     max_workers: int = 1
     debug: bool = False
     max_inference_calls: int = 100
-    use_mock: bool = False  # Add missing use_mock attribute
-    use_mock: bool = False  # Add missing use_mock attribute
-    use_mock: bool = False  # Add missing use_mock attribute
+    use_mock: bool = False
 
 
 @dataclass
