@@ -7,7 +7,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from statistics import mean
-from typing import List, Dict, Any, Callable
+from typing import List, Dict, Any, Callable, Tuple, Optional
 
 # Third-party imports
 import dspy
@@ -66,20 +66,6 @@ class FullyEvolutionaryPromptOptimizer:
         self.state = OptimizerState()
         self.history = []
         self.population = []
-        self.inference_count = 0
-        self.max_inference_calls = kwargs.get('max_inference_calls', 100)
-        self.max_population = kwargs.get('max_population', 100)
-        self.mutation_rate = kwargs.get('mutation_rate', 0.5)
-        self.max_workers = kwargs.get('max_workers', 1)
-        self.debug = kwargs.get('debug', False)
-        self.use_mock = kwargs.get('use_mock')
-        if self.use_mock is None:
-            self.use_mock = os.environ.get('EVOPROMPT_MOCK', 'false').lower() == 'true'
-
-        # Determine if we should use mock mode
-        self.use_mock = kwargs.get('use_mock')
-        if self.use_mock is None:
-            self.use_mock = os.environ.get('EVOPROMPT_MOCK', 'false').lower() == 'true'
 
         if self.use_mock and self.debug:
             print("MOCK MODE ENABLED: Using simulated responses instead of real LLM calls")
@@ -199,8 +185,8 @@ class FullyEvolutionaryPromptOptimizer:
         try:
             return ProgressBar(
                 total=self.config.max_inference_calls,
-                completed=self.state.inference_count,
-                width=50
+                progress=self.state.inference_count,
+                bar_width=50
             )
         except (ValueError, TypeError, AttributeError) as e:
             if self.debug:
@@ -301,7 +287,7 @@ class FullyEvolutionaryPromptOptimizer:
         }]
         return self.population
 
-    def _process_population(self, population, program, trainset, iteration, recent_scores):
+    def _process_population(self, *, population, program, trainset, iteration, recent_scores):
         """Process one iteration of population evolution.
         
         Args:
@@ -590,9 +576,9 @@ class FullyEvolutionaryPromptOptimizer:
         scores = []
         for pred, ex in zip(predictions, trainset):
             try:
-                score = self.metric(pred, ex)
+                score = self.config.metric(pred, ex)
                 scores.append(score)
-            except Exception as e:
+            except (ValueError, TypeError, KeyError) as e:
                 print(f"Error in metric calculation: {e}")
                 scores.append(0.0)
 
