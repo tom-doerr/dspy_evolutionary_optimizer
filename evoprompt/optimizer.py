@@ -1,7 +1,7 @@
 """Core implementation of the evolutionary prompt optimizer."""
 
 import os
-import random  # noqa: S311
+import random
 from statistics import mean
 import time
 
