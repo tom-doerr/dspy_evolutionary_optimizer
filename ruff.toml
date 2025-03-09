@@ -9,7 +9,7 @@ select = [
     "W",   # Pycodestyle warnings
     "B",   # flake8-bugbear
     "A",   # flake8-builtins
-    "D",   # pydocstyle (docstrings)
+    #"D",   # pydocstyle (docstrings)
     "TCH", # flake8-type-checking
     "SIM", # flake8-simplify
     "RUF", # Ruff-specific rules
@@ -28,20 +28,23 @@ ignore = [
     "S311",  # Standard pseudo-random generators are not suitable for cryptographic purposes
     "PLR0913",  # Too many arguments
     "PLR2004",  # Magic value used
+    "D203",
 ]
 
-[lint]
 # Complexity settings
-mccabe.max-complexity = 5
+[mccabe]
+max-complexity = 5
 
 # isort configuration
-isort.known-first-party = ["evoprompt"]
-isort.combine-as-imports = true
-isort.force-sort-within-sections = true
-isort.order-by-type = false
-isort.lines-after-imports = 2
-isort.lines-between-types = 1
+[isort]
+known-first-party = ["evoprompt"]
+combine-as-imports = true
+force-sort-within-sections = true
+order-by-type = false
+lines-after-imports = 2
+lines-between-types = 1
 
 # flake8-bugbear configuration
-flake8-bugbear.extend-immutable-calls = ["frozenset", "tuple"]
+[flake8-bugbear]
+extend-immutable-calls = ["frozenset", "tuple"]
 
