@@ -60,10 +60,9 @@ class TestFullyEvolutionaryPromptOptimizer:
             max_inference_calls=10
         )
         
-        # Run compilation
-        optimized_program = optimizer.compile(simple_program, simple_trainset)
+        # Run compilation and check history
+        _ = optimizer.compile(simple_program, simple_trainset)
         
-        # Check history
         history = optimizer.get_history()
         assert len(history) > 0
         assert all(isinstance(entry, dict) for entry in history)
