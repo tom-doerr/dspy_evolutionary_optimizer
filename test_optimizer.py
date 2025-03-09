@@ -1,5 +1,7 @@
 import pytest
+
 from evoprompt.optimizer import FullyEvolutionaryPromptOptimizer
+
 
 @pytest.fixture
 def mock_metric():

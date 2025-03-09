@@ -746,7 +746,7 @@ class FullyEvolutionaryPromptOptimizer:
             ])),
 
             # Remove some words (but preserve placeholders)
-            (0.2, lambda p: " ".join(w for w in p.split() 
+            (0.2, lambda p: " ".join(w for w in p.split()
                 if "{{input}}" in w or "{{output}}" in w or random.random() > 0.2)),
 
             # Enhance input placeholder
@@ -755,7 +755,7 @@ class FullyEvolutionaryPromptOptimizer:
                 "Consider {{input}}", "Analyze {{input}}", "From {{input}}"
             ]))),
 
-            # Enhance output placeholder  
+            # Enhance output placeholder
             (0.15, lambda p: p.replace("{{output}}", random.choice([
                 "-> {{output}}", "{{output}} result", "yields {{output}}",
                 "produce {{output}}", "return {{output}}", "output: {{output}}"
@@ -896,7 +896,7 @@ class FullyEvolutionaryPromptOptimizer:
             ],
             "label": [
                 "positive",
-                "negative", 
+                "negative",
                 "neutral"
             ]
         }
