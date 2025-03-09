@@ -34,7 +34,7 @@ def main():
     # Create and run the optimizer
     optimizer = FullyEvolutionaryPromptOptimizer(
         metric=accuracy_metric,
-        generations=50,  # Reduced for faster testing
+        generations=10,  # Reduced for faster testing
         mutation_rate=0.7,  # Increased for more exploration
         growth_rate=0.4,  # Increased for more population diversity
         max_population=10,  # Limit population size to prevent exponential growth
