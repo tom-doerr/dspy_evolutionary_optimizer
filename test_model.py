@@ -6,7 +6,8 @@ import time
 import dspy
 
 
-def main():
+def main() -> None:
+    """Run tests to verify language model functionality."""
     print("Testing direct model access...")
     
     # Initialize the language model
