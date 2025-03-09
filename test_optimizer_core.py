@@ -135,9 +135,7 @@ def test_parallel_execution_edge_cases(
 
     # Test invalid chromosome
     with pytest.raises(TypeError):
-        optimizer._evaluate(
-            program, None, [dspy.Example(text="test", label="test")]
-        )
+        optimizer._evaluate(program, None, [dspy.Example(text="test", label="test")])
 
     # Test invalid examples type
     with pytest.raises(TypeError):
