@@ -26,16 +26,23 @@ class EvolutionVisualizer:
             return f"[Progress: {inference_count}/{max_inference_calls}]"
 
     def _create_main_panel(self, stats: Dict[str, Any]) -> Table:
-        """Create main stats panel."""
+        """Create main stats panel.
+        
+        Args:
+            stats: Dictionary containing evolution statistics
+            
+        Returns:
+            A rich Table with formatted statistics
+        """
         panel = Table.grid(padding=(1, 2))
         panel.add_column(justify="left", style="cyan")
         panel.add_column(justify="right", style="magenta")
         
-        panel.add_row("Iteration", f"[bold]{iteration}")
-        panel.add_row("Best Score", f"[green]{best_score:.3f}")
-        panel.add_row("Avg Score", f"[yellow]{avg_score:.3f}")
-        panel.add_row("Population", f"[blue]{population_size}")
-        panel.add_row("Inference Calls", f"[cyan]{inference_count}/{max_inference_calls}")
+        panel.add_row("Iteration", f"[bold]{stats['iteration']}")
+        panel.add_row("Best Score", f"[green]{stats['best_score']:.3f}")
+        panel.add_row("Avg Score", f"[yellow]{stats['avg_score']:.3f}")
+        panel.add_row("Population", f"[blue]{stats['population_size']}")
+        panel.add_row("Inference Calls", f"[cyan]{stats['inference_count']}/{stats['max_inference_calls']}")
         return panel
 
     def _create_history_table(self, history: List[Dict[str, Any]]) -> Table:
@@ -57,26 +64,21 @@ class EvolutionVisualizer:
 
     def log_progress(self, *, stats: Dict[str, Any], 
                     history: List[Dict[str, Any]]) -> None:
-        """Log and display progress information."""
+        """Log and display progress information.
+        
+        Args:
+            stats: Dictionary containing evolution statistics
+            history: List of historical statistics
+        """
         if stats["best_score"] is None:
             return
             
-        best_score = stats["best_score"]
-        avg_score = stats["avg_score"]
-        population_size = stats["population_size"]
-        inference_count = stats["inference_count"]
-        max_inference_calls = stats["max_inference_calls"]
-        iteration = stats["iteration"]
-        best_prompt = stats["best_prompt"]
-            
-        progress = self._create_progress_bar(inference_count, max_inference_calls)
-        main_panel = self._create_main_panel(iteration, best_score, avg_score,
-                                           len(population), inference_count,
-                                           max_inference_calls)
+        progress = self._create_progress_bar(stats["inference_count"], stats["max_inference_calls"])
+        main_panel = self._create_main_panel(stats)
         history_table = self._create_history_table(history)
 
         prompt_panel = Panel(
-            best_prompt,
+            stats["best_prompt"],
             title="[bold]Best Prompt",
             border_style="blue",
             padding=(1, 2),
@@ -98,10 +100,10 @@ class EvolutionVisualizer:
         except (ValueError, TypeError, AttributeError) as e:
             if self.debug:
                 print(f"Error rendering progress display: {e}")
-            self.console.print(f"[bold]Generation {iteration}")
-            self.console.print(f"Best Score: {best_score:.3f}")
-            self.console.print(f"Avg Score: {avg_score:.3f}")
-            self.console.print(f"Population: {len(population)}")
-            self.console.print(f"Inference Calls: {inference_count}/{max_inference_calls}")
+            self.console.print(f"[bold]Generation {stats['iteration']}")
+            self.console.print(f"Best Score: {stats['best_score']:.3f}")
+            self.console.print(f"Avg Score: {stats['avg_score']:.3f}")
+            self.console.print(f"Population: {stats['population_size']}")
+            self.console.print(f"Inference Calls: {stats['inference_count']}/{stats['max_inference_calls']}")
 
         self.console.print()
