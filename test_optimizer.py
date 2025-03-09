@@ -47,7 +47,7 @@ def mock_signature() -> dspy.Signature:
 def test_optimizer_initialization(_mock_metric: Callable[[Any, Any], float]) -> None:
     """Test optimizer initialization with various parameters."""
     optimizer = FullyEvolutionaryPromptOptimizer(
-        metric=mock_metric,
+        metric=_mock_metric,
         generations=5,
         mutation_rate=0.5,
         growth_rate=0.3,
@@ -56,7 +56,7 @@ def test_optimizer_initialization(_mock_metric: Callable[[Any, Any], float]) -> 
     )
 
     # Verify configuration
-    assert optimizer.config.metric == mock_metric
+    assert optimizer.config.metric == _mock_metric
     assert optimizer.config.generations == 5
     assert optimizer.config.mutation_rate == 0.5
     assert optimizer.config.growth_rate == 0.3
@@ -87,6 +87,46 @@ def test_optimizer_with_mock_mode(_metric_fixture: Callable[[Any, Any], float]) 
     optimizer = FullyEvolutionaryPromptOptimizer(metric_fixture, use_mock=True)
     assert optimizer.config.use_mock is True
 
+
+def _test_parameter_validation_cases(optimizer: FullyEvolutionaryPromptOptimizer) -> None:
+    """Test various parameter validation cases."""
+    # Test invalid generations
+    with pytest.raises(ValueError):
+        optimizer("not_a_function", generations=0)
+    with pytest.raises(ValueError):
+        optimizer("not_a_function", generations=-1)
+
+    # Test invalid mutation rate
+    with pytest.raises(ValueError):
+        optimizer("not_a_function", mutation_rate=1.1)
+    with pytest.raises(ValueError):
+        optimizer("not_a_function", mutation_rate=-0.1)
+
+    # Test invalid max workers
+    with pytest.raises(ValueError):
+        optimizer("not_a_function", max_workers=0)
+    with pytest.raises(ValueError):
+        optimizer("not_a_function", max_workers=-1)
+
+    # Test invalid growth rate
+    with pytest.raises(ValueError):
+        optimizer("not_a_function", growth_rate=1.1)
+    with pytest.raises(ValueError):
+        optimizer("not_a_function", growth_rate=-0.1)
+
+    # Test invalid max population
+    with pytest.raises(ValueError):
+        optimizer("not_a_function", max_population=0)
+    with pytest.raises(ValueError):
+        optimizer("not_a_function", max_population=-1)
+
+    # Test invalid debug type
+    with pytest.raises(TypeError):
+        optimizer("not_a_function", debug="not_a_boolean")
+
+    # Test invalid use_mock type
+    with pytest.raises(TypeError):
+        optimizer("not_a_function", use_mock="not_a_boolean")
 
 def test_parameter_validation(_metric_fixture: Callable[[Any, Any], float]) -> None:
     # Test valid parameters
@@ -237,7 +277,7 @@ def test_parameter_validation(_metric_fixture: Callable[[Any, Any], float]) -> N
 
 
 def test_population_handling(_metric_fixture: Callable[[Any, Any], float]) -> None:
-    optimizer = FullyEvolutionaryPromptOptimizer(metric_fixture)
+    optimizer = FullyEvolutionaryPromptOptimizer(metric=_metric_fixture)
 
     # Test empty population
     with pytest.raises(ValueError):
@@ -263,7 +303,7 @@ def test_population_handling(_metric_fixture: Callable[[Any, Any], float]) -> No
 
 
 def test_mutation_logic(_metric_fixture: Callable[[Any, Any], float]) -> None:
-    optimizer = FullyEvolutionaryPromptOptimizer(metric_fixture)
+    optimizer = FullyEvolutionaryPromptOptimizer(metric=_metric_fixture)
 
     # Test basic mutation
     original = "Given {{input}}, generate {{output}}"
@@ -289,7 +329,7 @@ def test_mutation_logic(_metric_fixture: Callable[[Any, Any], float]) -> None:
 
 
 def test_crossover_logic(_metric_fixture: Callable[[Any, Any], float]) -> None:
-    optimizer = FullyEvolutionaryPromptOptimizer(metric_fixture)
+    optimizer = FullyEvolutionaryPromptOptimizer(metric=_metric_fixture)
     p1 = "Given {{input}}, generate {{output}}"
     p2 = "Analyze {{input}} and produce {{output}}"
     crossed = optimizer._crossover(p1, p2)
@@ -299,7 +339,7 @@ def test_crossover_logic(_metric_fixture: Callable[[Any, Any], float]) -> None:
 
 
 def test_prompt_validation(_metric_fixture: Callable[[Any, Any], float]) -> None:
-    optimizer = FullyEvolutionaryPromptOptimizer(metric_fixture)
+    optimizer = FullyEvolutionaryPromptOptimizer(metric=_metric_fixture)
     with pytest.raises(TypeError):
         optimizer._ensure_placeholders(None)
     with pytest.raises(TypeError):
