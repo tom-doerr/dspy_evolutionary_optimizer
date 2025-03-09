@@ -491,6 +491,26 @@ class FullyEvolutionaryPromptOptimizer:
 
         return sum(scores) / len(scores) if scores else 0.0
 
+    def _get_input_kwargs(self, program, example):
+        """Extract input kwargs from example based on program signature."""
+        return {k: example[k] for k in program.signature.input_fields}
+
+    def _make_single_prediction(self, predictor, input_kwargs, example):
+        """Make a single prediction handling mock mode and inference limits."""
+        if self.use_mock:
+            pred = self._create_mock_prediction(predictor.signature, input_kwargs, example)
+            time.sleep(0.1)  # Simulate API latency
+            return pred
+
+        if self.max_inference_calls > 0 and self.inference_count >= self.max_inference_calls:
+            if self.debug:
+                print("  Inference call limit reached, using mock prediction")
+            return self._create_mock_prediction(predictor.signature, input_kwargs, example)
+
+        pred = predictor(**input_kwargs)
+        self.inference_count += 1
+        return pred
+
     def _make_predictions(self, program, prompt, trainset):
         """Make predictions for all training examples."""
         predictions = []
@@ -498,20 +518,8 @@ class FullyEvolutionaryPromptOptimizer:
         
         for ex in trainset:
             try:
-                input_kwargs = {k: ex[k] for k in program.signature.input_fields}
-                
-                if self.use_mock:
-                    pred = self._create_mock_prediction(program.signature, input_kwargs, ex)
-                    time.sleep(0.1)  # Simulate API latency
-                else:
-                    if self.max_inference_calls > 0 and self.inference_count >= self.max_inference_calls:
-                        if self.debug:
-                            print("  Inference call limit reached, using mock prediction")
-                        pred = self._create_mock_prediction(program.signature, input_kwargs, ex)
-                    else:
-                        pred = predictor(**input_kwargs)
-                        self.inference_count += 1
-
+                input_kwargs = self._get_input_kwargs(program, ex)
+                pred = self._make_single_prediction(predictor, input_kwargs, ex)
                 predictions.append(pred)
             except Exception as e:
                 print(f"Error during prediction: {e}")
@@ -573,6 +581,22 @@ class FullyEvolutionaryPromptOptimizer:
                 scores.append(0.0)
         return scores
 
+    def _evaluate_predictions(self, predictions, trainset):
+        """Calculate average score for predictions."""
+        if not predictions:
+            return 0.0
+
+        scores = []
+        for pred, ex in zip(predictions, trainset):
+            try:
+                score = self.metric(pred, ex)
+                scores.append(score)
+            except Exception as e:
+                print(f"Error in metric calculation: {e}")
+                scores.append(0.0)
+
+        return sum(scores) / len(scores) if scores else 0.0
+
     def _evaluate(self, program, prompt, trainset):
         """
         Evaluate a prompt's performance on the training set.
@@ -586,34 +610,14 @@ class FullyEvolutionaryPromptOptimizer:
             Average score across all examples
         """
         try:
-            predictor = dspy.Predict(program.signature, prompt=prompt)
-            predictions = []
-
             if self.debug:
                 print(f"\nEvaluating prompt: '{prompt}'")
 
-            for ex in trainset:
-                try:
-                    input_kwargs = {k: ex[k] for k in program.signature.input_fields}
-                    start_time = time.time()
-
-                    if self.debug and len(predictions) == 0:
-                        print(f"  Input: {input_kwargs}")
-
-                    pred = self._make_prediction(predictor, input_kwargs, ex)
-                    elapsed = time.time() - start_time
-                    
-                    self._log_prediction_debug(input_kwargs, pred, elapsed)
-                    predictions.append(pred)
-                except Exception as e:
-                    print(f"Error during prediction: {e}")
-                    return 0.0
-
+            predictions = self._make_predictions(program, prompt, trainset)
             if not predictions:
                 return 0.0
 
-            scores = self._calculate_scores(predictions, trainset)
-            return sum(scores) / len(scores) if scores else 0.0
+            return self._evaluate_predictions(predictions, trainset)
 
         except Exception as e:
             print(f"Evaluation error: {e}")
@@ -638,17 +642,8 @@ class FullyEvolutionaryPromptOptimizer:
         crossover_point = random.randint(0, min_len)
         return " ".join(p1_parts[:crossover_point] + p2_parts[crossover_point:])
 
-    def _mutate(self, prompt: str) -> str:
-        """
-        Apply a random mutation to a prompt.
-        
-        Args:
-            prompt: Prompt to mutate
-            
-        Returns:
-            A mutated version of the prompt
-        """
-        # Ensure input and output placeholders are present
+    def _ensure_placeholders(self, prompt):
+        """Ensure input and output placeholders are present."""
         if "{{input}}" not in prompt:
             prompt = prompt.replace("Input:", "{{input}}").replace("Given ", "Given {{input}}")
             if "{{input}}" not in prompt:
@@ -658,8 +653,11 @@ class FullyEvolutionaryPromptOptimizer:
             prompt = prompt.replace("-> ", "-> {{output}}").replace(" result", " {{output}} result")
             if "{{output}}" not in prompt:
                 prompt = prompt + " {{output}}"
+        return prompt
 
-        mutations = [
+    def _get_mutations(self):
+        """Return list of mutation functions."""
+        return [
             # Add instructional phrases
             lambda p: p + " " + random.choice([
                 "to generate", "with details", "for classification", "-> answer",
@@ -701,12 +699,47 @@ class FullyEvolutionaryPromptOptimizer:
             lambda p: p.replace(" ", " " + random.choice(["", "", "", "really ", "carefully ", "properly ", "thoroughly "]))
         ]
 
+    def _mutate(self, prompt: str) -> str:
+        """
+        Apply a random mutation to a prompt.
+        
+        Args:
+            prompt: Prompt to mutate
+            
+        Returns:
+            A mutated version of the prompt
+        """
+        prompt = self._ensure_placeholders(prompt)
+        mutations = self._get_mutations()
+        
         # Apply 1-2 mutations
         num_mutations = random.randint(1, 2)
         for _ in range(num_mutations):
             prompt = random.choice(mutations)(prompt)
 
         return prompt
+
+    def _create_mock_prediction_class(self):
+        """Create the MockPrediction class."""
+        class MockPrediction:
+            def __init__(self, **kwargs):
+                for key, value in kwargs.items():
+                    setattr(self, key, value)
+
+            def __repr__(self):
+                attrs = ', '.join(f"{k}='{v}'" for k, v in self.__dict__.items())
+                return f"MockPrediction({attrs})"
+        return MockPrediction
+
+    def _get_output_values(self, signature, input_kwargs, example):
+        """Generate output values for mock prediction."""
+        output_values = {}
+        for field in signature.output_fields:
+            if hasattr(example, field):
+                output_values[field] = getattr(example, field)
+            else:
+                output_values[field] = f"Mock {field} for {input_kwargs}"
+        return output_values
 
     def _create_mock_prediction(self, signature, input_kwargs, example):
         """
@@ -720,30 +753,8 @@ class FullyEvolutionaryPromptOptimizer:
         Returns:
             A mock prediction object that will pass the metric
         """
-        # Create a simple object with the expected output fields
-        class MockPrediction:
-            def __init__(self, **kwargs):
-                for key, value in kwargs.items():
-                    setattr(self, key, value)
-
-            def __repr__(self):
-                attrs = ', '.join(f"{k}='{v}'" for k, v in self.__dict__.items())
-                return f"MockPrediction({attrs})"
-
-        # Extract output fields from the signature
-        output_fields = signature.output_fields
-
-        # Create a prediction with the expected output values
-        # If we have the example, use its values, otherwise make something up
-        output_values = {}
-        for field in output_fields:
-            if hasattr(example, field):
-                # Use the example's value for this field
-                output_values[field] = getattr(example, field)
-            else:
-                # Make up a value based on the input
-                output_values[field] = f"Mock {field} for {input_kwargs}"
-
+        MockPrediction = self._create_mock_prediction_class()
+        output_values = self._get_output_values(signature, input_kwargs, example)
         return MockPrediction(**output_values)
 
     def get_history(self):
