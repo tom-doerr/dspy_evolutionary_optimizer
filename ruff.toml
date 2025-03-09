@@ -1,31 +1,22 @@
-[lint]
+[tool.ruff]
+# Lint rules
 select = [
-    # Error checking
-    "E",  # Pycodestyle errors
-    "F",  # Pyflakes errors
-    
-    # Style
+    "E",   # Pycodestyle errors
+    "F",   # Pyflakes errors
     "C4",  # Flake8 comprehensions
     "I",   # isort (import sorting)
     "UP",  # pyupgrade (modern Python features)
     "W",   # Pycodestyle warnings
-    
-    # Best practices
     "B",   # flake8-bugbear
     "A",   # flake8-builtins
     "D",   # pydocstyle (docstrings)
     "TCH", # flake8-type-checking
     "SIM", # flake8-simplify
     "RUF", # Ruff-specific rules
-    
-    # Complexity
     "C90", # McCabe complexity
     "PLR", # pylint rules
 ]
 
-# Complexity limits
-
-# Keep existing ignores but add more reasonable ones
 ignore = [
     "E501",  # Line too long (handled by formatter)
     "E203",  # Whitespace before ':' (conflicts with black)
@@ -40,19 +31,18 @@ ignore = [
 ]
 
 # Per-file ignores
-[lint.per-file-ignores]
-"tests/*" = ["D"]  # Don't require docstrings in tests
-"examples/*" = ["D"]  # Don't require docstrings in examples
-"src/*" = ["D"]  # Don't require docstrings in source
+per-file-ignores = [
+    { "glob" = "tests/*", "ignore" = ["D"] },
+    { "glob" = "examples/*", "ignore" = ["D"] },
+    { "glob" = "src/*", "ignore" = ["D"] }
+]
 
 # Complexity settings
-[mccabe]
-max-complexity = 5  # McCabe cyclomatic complexity
+[tool.ruff.mccabe]
+max-complexity = 5
 
-[flake8-bugbear]
-extend-immutable-calls = ["frozenset", "tuple"]
-
-[isort]
+# isort configuration
+[tool.ruff.isort]
 known-first-party = ["evoprompt"]
 combine-as-imports = true
 force-sort-within-sections = true
@@ -60,8 +50,6 @@ order-by-type = false
 lines-after-imports = 2
 lines-between-types = 1
 
-# Ruff-specific rules
-[ruff]
-allow-star-arg-unpacking = false
-check-builtin-shadowing = true
-check-typed-exception = true
+# flake8-bugbear configuration
+[tool.ruff.flake8-bugbear]
+extend-immutable-calls = ["frozenset", "tuple"]
