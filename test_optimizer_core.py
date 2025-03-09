@@ -1,9 +1,10 @@
 """Core tests for the evolutionary prompt optimizer."""
 
-import pytest
-from evoprompt.optimizer import FullyEvolutionaryPromptOptimizer
-from evoprompt.chromosome import Chromosome
 import dspy
+
+from evoprompt.chromosome import Chromosome
+from evoprompt.optimizer import FullyEvolutionaryPromptOptimizer
+
 
 def test_optimizer_initialization():
     """Test basic optimizer initialization."""
