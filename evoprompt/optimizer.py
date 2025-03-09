@@ -19,7 +19,7 @@ from textual.widgets import ProgressBar
 from evoprompt.chromosome import Chromosome
 
 
-@dataclass 
+@dataclass
 class OptimizerConfig:
     metric: Callable
     generations: int = 10
