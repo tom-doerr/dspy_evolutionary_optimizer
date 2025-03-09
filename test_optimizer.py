@@ -1,7 +1,7 @@
 """Test suite for the evolutionary prompt optimizer."""
 
 import pytest
-from evoprompt.optimizer import FullyEvolutionaryPromptOptimizer
+from evoprompt import FullyEvolutionaryPromptOptimizer
 
 
 @pytest.fixture
