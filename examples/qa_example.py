@@ -8,6 +8,9 @@ from evoprompt.visualization import plot_evolution_history
 
 
 def main():
+    # Initialize the language model
+    lm = dspy.LM('openrouter/google/gemini-2.0-flash-001')
+    dspy.settings.configure(lm=lm)
     # Define a simple QA task
     qa_signature = dspy.Signature("question, context -> answer")
     qa_predictor = dspy.Predict(qa_signature)

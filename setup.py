@@ -7,7 +7,6 @@ setup(
     install_requires=[
         "dspy-ai",
         "matplotlib",
-        "statistics",
     ],
     author="Your Name",
     author_email="your.email@example.com",
