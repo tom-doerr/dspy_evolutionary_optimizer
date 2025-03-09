@@ -194,7 +194,7 @@ def test_parameter_validation(metric_fixture: Callable[[Any, Any], float]) -> No
         growth_rate=0.3,
         max_population=20,
         debug=True,
-        use_mock=True
+        use_mock=True,
     )
     assert optimizer.config.generations == 5
     assert optimizer.config.mutation_rate == 0.5
@@ -208,7 +208,7 @@ def test_parameter_validation(metric_fixture: Callable[[Any, Any], float]) -> No
         growth_rate=0.0,
         max_population=1,
         debug=False,
-        use_mock=False
+        use_mock=False,
     )
     assert optimizer.config.generations == 1
     assert optimizer.config.mutation_rate == 0.0
@@ -304,7 +304,9 @@ def test_parameter_validation(metric_fixture: Callable[[Any, Any], float]) -> No
 
     # Test invalid generations
     with pytest.raises(ValueError):
-        FullyEvolutionaryPromptOptimizer(metric=mock_metric, generations=0)  # pylint: disable=undefined-variable
+        FullyEvolutionaryPromptOptimizer(
+            metric=mock_metric, generations=0
+        )  # pylint: disable=undefined-variable
     with pytest.raises(ValueError):
         FullyEvolutionaryPromptOptimizer(mock_metric, generations=-1)
 
