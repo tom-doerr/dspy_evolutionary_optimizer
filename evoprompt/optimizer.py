@@ -841,8 +841,55 @@ class FullyEvolutionaryPromptOptimizer:
 
         """
         MockPrediction = self._create_mock_prediction_class()
-        output_values = self._get_output_values(signature, input_kwargs, example)
+        
+        # Generate more realistic mock responses based on input
+        output_values = {}
+        for field in signature.output_fields:
+            if hasattr(example, field):
+                # Use example value if available
+                output_values[field] = getattr(example, field)
+            else:
+                # Generate context-aware mock response
+                input_text = next(iter(input_kwargs.values()), ""
+                output_values[field] = self._generate_mock_response(field, input_text)
+                
         return MockPrediction(**output_values)
+
+    def _generate_mock_response(self, field_name: str, input_text: str) -> str:
+        """Generate realistic mock responses based on field name and input."""
+        # Common response patterns for different field types
+        response_templates = {
+            "text": [
+                "This is a sample response to '{input}'",
+                "Based on the input '{input}', here is the output",
+                "The analysis of '{input}' suggests this result",
+                "Considering '{input}', the conclusion is"
+            ],
+            "answer": [
+                "The answer is 42",
+                "After careful consideration, the solution is clear",
+                "The correct response would be",
+                "Based on the evidence, the answer is"
+            ],
+            "summary": [
+                "In summary, '{input}' can be described as",
+                "The key points from '{input}' are",
+                "To summarize '{input}', we can say",
+                "A brief overview would be"
+            ],
+            "label": [
+                "positive",
+                "negative", 
+                "neutral"
+            ]
+        }
+        
+        # Get appropriate templates for field
+        templates = response_templates.get(field_name, ["Mock {field} for {input}"])
+        
+        # Select random template and format with input
+        template = random.choice(templates)
+        return template.format(field=field_name, input=input_text)
 
     def get_history(self):
         """Get the evolution history.
