@@ -7,6 +7,11 @@ import time
 from statistics import mean
 import dspy
 import os
+from textual.app import App
+from textual.containers import Container
+from textual.widgets import Header, Footer, Static, ProgressBar
+from rich.table import Table
+from rich.console import Console
 
 
 class FullyEvolutionaryPromptOptimizer:
@@ -156,8 +161,41 @@ class FullyEvolutionaryPromptOptimizer:
                         "best_prompt": max(population, key=lambda x: x["score"] if x["score"] is not None else -float('inf'))["prompt"]
                     })
                     
-                    print(f"Iteration {iteration}: Best Score = {best_score:.3f}, "
-                          f"Avg Score = {avg_score:.3f}, Population Size = {len(population)}")
+                    # Create rich table for progress display
+                    console = Console()
+                    table = Table(title="Evolution Progress", show_header=True, header_style="bold magenta")
+                    
+                    table.add_column("Iteration", justify="right")
+                    table.add_column("Best Score", justify="right")
+                    table.add_column("Avg Score", justify="right")
+                    table.add_column("Population", justify="right")
+                    table.add_column("Best Prompt", justify="left")
+                    
+                    # Add current stats
+                    table.add_row(
+                        str(iteration),
+                        f"{best_score:.3f}",
+                        f"{avg_score:.3f}",
+                        str(len(population)),
+                        best_prompt[:50] + "..." if len(best_prompt) > 50 else best_prompt
+                    )
+                    
+                    # Add recent history
+                    for entry in self.history[-5:]:
+                        table.add_row(
+                            str(entry['iteration']),
+                            f"{entry['best_score']:.3f}",
+                            f"{entry['avg_score']:.3f}",
+                            str(entry['population_size']),
+                            entry['best_prompt'][:50] + "..." if len(entry['best_prompt']) > 50 else entry['best_prompt']
+                        )
+                    
+                    # Print the table
+                    console.print(table)
+                    
+                    # Print progress bar
+                    progress = ProgressBar(total=self.max_inference_calls, completed=self.inference_count)
+                    console.print(progress)
         
         # Make sure all chromosomes are evaluated before sorting
         for chromosome in population:
@@ -167,13 +205,20 @@ class FullyEvolutionaryPromptOptimizer:
         # Sort by score and return best predictor
         population.sort(key=lambda x: x["score"], reverse=True)
         best_prompt = population[0]["prompt"]
-        print("\nEvolution History:")
-        for entry in self.history:
-            print(f"Gen {entry['generation']}: Best Score = {entry['best_score']:.3f}, "
-                  f"Avg Score = {entry['avg_score']:.3f}, Size = {entry['population_size']}")
+        # Create final summary table
+        console = Console()
+        table = Table(title="Evolution Results", show_header=True, header_style="bold green")
         
-        print(f"\nBest Prompt: '{best_prompt}'")
-        print(f"Total inference calls: {self.inference_count}")
+        table.add_column("Metric", justify="left")
+        table.add_column("Value", justify="right")
+        
+        table.add_row("Best Score", f"{population[0]['score']:.3f}")
+        table.add_row("Total Iterations", str(iteration))
+        table.add_row("Population Size", str(len(population)))
+        table.add_row("Inference Calls", str(self.inference_count))
+        table.add_row("Best Prompt", best_prompt)
+        
+        console.print(table)
         return dspy.Predict(program.signature, prompt=best_prompt)
 
     def _evaluate(self, program, prompt, trainset):

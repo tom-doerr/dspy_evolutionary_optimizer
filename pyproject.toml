@@ -1,3 +1,9 @@
+[project]
+dependencies = [
+    "textual>=0.54.0",
+    "dspy>=2.0.0"
+]
+
 [tool.ruff]
 line-length = 88
 select = ["E", "W", "F", "I", "B", "C", "A", "N", "UP", "YTT", "RUF"]
