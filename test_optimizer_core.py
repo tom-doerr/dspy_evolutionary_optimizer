@@ -1,8 +1,8 @@
 """Tests for parallel execution and model interactions."""
 
+from typing import Callable, Any
 import pytest
 import dspy
-from typing import List
 from evoprompt.chromosome import Chromosome
 from evoprompt import FullyEvolutionaryPromptOptimizer
 
@@ -15,8 +15,7 @@ def mock_metric() -> Callable[[Any, Any], float]:
 def test_parallel_evaluation(mock_metric: Callable[[Any, Any], float]) -> None:
     optimizer = FullyEvolutionaryPromptOptimizer(mock_metric, max_workers=2)
     
-    signature = dspy.Signature("text -> label")
-    signature.__doc__ = "Given text, generate a label"
+    signature = dspy.Signature("text -> label", "Given text, generate a label")
     program = dspy.Predict(signature)
     
     examples = [
@@ -52,7 +51,7 @@ def test_parallel_execution_edge_cases(mock_metric: Callable[[Any, Any], float])
     optimizer = FullyEvolutionaryPromptOptimizer(mock_metric, max_workers=2)
     
     # Test empty examples
-    signature = dspy.Signature("text -> label")
+    signature = dspy.Signature("text -> label", "Given text, generate a label")
     program = dspy.Predict(signature)
     with pytest.raises(ValueError):
         optimizer._evaluate(program, Chromosome(), [])
