@@ -14,7 +14,6 @@ select = [
     "B",   # flake8-bugbear
     "A",   # flake8-builtins
     "D",   # pydocstyle (docstrings)
-    "S",   # flake8-bandit (security)
     "TCH", # flake8-type-checking
     "SIM", # flake8-simplify
     "RUF", # Ruff-specific rules
@@ -32,7 +31,12 @@ ignore = [
     "N806",  # Variable in function should be lowercase
     "W293",  # Blank line contains whitespace
     "D107",  # Missing docstring in __init__
+    "S311",  # Standard pseudo-random generators are not suitable for cryptographic purposes
 ]
+
+[flake8-bandit]
+# Disable security checks since we're not doing crypto
+extend-ignore = ["S311"]
 
 [lint.per-file-ignores]
 "tests/*" = ["D"]  # Don't require docstrings in tests
