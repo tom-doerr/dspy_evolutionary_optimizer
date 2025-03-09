@@ -14,6 +14,7 @@ def _mock_metric() -> Callable[[Any, Any], float]:
 
     return metric
 
+
 @pytest.fixture(name="metric_fixture")
 def _metric_fixture() -> Callable[[Any, Any], float]:
     def metric(_pred: Any, _example: Any) -> float:
@@ -88,7 +89,9 @@ def test_optimizer_with_mock_mode(_metric_fixture: Callable[[Any, Any], float]) 
     assert optimizer.config.use_mock is True
 
 
-def _test_parameter_validation_cases(optimizer: FullyEvolutionaryPromptOptimizer) -> None:
+def _test_parameter_validation_cases(
+    optimizer: FullyEvolutionaryPromptOptimizer,
+) -> None:
     """Test various parameter validation cases."""
     # Test invalid generations
     with pytest.raises(ValueError):
@@ -128,6 +131,7 @@ def _test_parameter_validation_cases(optimizer: FullyEvolutionaryPromptOptimizer
     with pytest.raises(TypeError):
         optimizer("not_a_function", use_mock="not_a_boolean")
 
+
 def test_parameter_validation(_metric_fixture: Callable[[Any, Any], float]) -> None:
     # Test valid parameters
     optimizer = FullyEvolutionaryPromptOptimizer(
@@ -137,7 +141,7 @@ def test_parameter_validation(_metric_fixture: Callable[[Any, Any], float]) -> N
         growth_rate=0.3,
         max_population=20,
         debug=True,
-        use_mock=True
+        use_mock=True,
     )
     assert optimizer.config.generations == 5
     assert optimizer.config.mutation_rate == 0.5
@@ -151,7 +155,7 @@ def test_parameter_validation(_metric_fixture: Callable[[Any, Any], float]) -> N
         growth_rate=0.0,
         max_population=1,
         debug=False,
-        use_mock=False
+        use_mock=False,
     )
     assert optimizer.config.generations == 1
     assert optimizer.config.mutation_rate == 0.0
