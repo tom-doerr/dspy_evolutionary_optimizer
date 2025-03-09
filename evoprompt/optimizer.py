@@ -1,5 +1,4 @@
-"""Core implementation of the evolutionary prompt optimizer.
-"""
+"""Core implementation of the evolutionary prompt optimizer."""
 
 import os
 import random
@@ -61,7 +60,7 @@ class FullyEvolutionaryPromptOptimizer:
         """Select a prompt using Pareto distribution to favor top performers."""
         scored_population = [p for p in population if p["score"] is not None]
         if not scored_population:
-            return random.choice(population)
+            return random.choice(population)  # noqa: S311
         
         # Sort population by score descending
         scored_population.sort(key=lambda x: x["score"], reverse=True)
@@ -493,37 +492,45 @@ class FullyEvolutionaryPromptOptimizer:
         """Extract input kwargs from example based on program signature."""
         return {k: example[k] for k in program.signature.input_fields}
 
+    def _make_mock_prediction(self, predictor, input_kwargs, example, start_time):
+        """Handle mock prediction logic."""
+        if self.debug and not self.use_mock:
+            print("  Inference call limit reached, using mock prediction")
+        
+        # Simulate realistic API latency between 0.1-0.5 seconds
+        latency = random.uniform(0.1, 0.5)  # noqa: S311
+        time.sleep(latency)
+        
+        pred = self._create_mock_prediction(predictor.signature, input_kwargs, example)
+        
+        if self.debug:
+            elapsed = time.time() - start_time
+            print(f"  Mock prediction took {elapsed:.4f}s")
+            print(f"  Prediction result: {pred}")
+        
+        return pred
+
+    def _log_real_prediction(self, pred, start_time):
+        """Log details of a real prediction."""
+        elapsed = time.time() - start_time
+        print(f"  Real prediction took {elapsed:.4f}s")
+        if elapsed < 0.05:
+            print("  WARNING: Prediction was extremely fast - verify LLM is being called")
+        print(f"  Prediction result: {pred}")
+
     def _make_single_prediction(self, predictor, input_kwargs, example):
         """Make a single prediction handling mock mode and inference limits."""
         start_time = time.time()
         
         if self.use_mock or (self.max_inference_calls > 0 and self.inference_count >= self.max_inference_calls):
-            if self.debug and not self.use_mock:
-                print("  Inference call limit reached, using mock prediction")
-            
-            # Simulate realistic API latency between 0.1-0.5 seconds
-            latency = random.uniform(0.1, 0.5)
-            time.sleep(latency)
-            
-            pred = self._create_mock_prediction(predictor.signature, input_kwargs, example)
-            
-            if self.debug:
-                elapsed = time.time() - start_time
-                print(f"  Mock prediction took {elapsed:.4f}s")
-                print(f"  Prediction result: {pred}")
-            
-            return pred
+            return self._make_mock_prediction(predictor, input_kwargs, example, start_time)
 
         # Make real prediction
         pred = predictor(**input_kwargs)
         self.inference_count += 1
         
         if self.debug:
-            elapsed = time.time() - start_time
-            print(f"  Real prediction took {elapsed:.4f}s")
-            if elapsed < 0.05:
-                print("  WARNING: Prediction was extremely fast - verify LLM is being called")
-            print(f"  Prediction result: {pred}")
+            self._log_real_prediction(pred, start_time)
             
         return pred
 

@@ -242,7 +242,7 @@ class TestFullyEvolutionaryPromptOptimizer:
         assert "{{output}}" in mutated
         assert len(mutated) >= len(original_prompt)
 
-    def test_mock_prediction(self, simple_program, mock_metric):
+    def test_mock_prediction(self, simple_program, mock_metric, capsys):
         """Test mock prediction creation."""
         optimizer = FullyEvolutionaryPromptOptimizer(
             mock_metric,
