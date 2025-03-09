@@ -3,7 +3,6 @@ Core implementation of the evolutionary prompt optimizer.
 """
 
 import random
-import string
 from statistics import mean
 import dspy
 
