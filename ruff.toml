@@ -23,9 +23,7 @@ select = [
     "PLR", # pylint rules
 ]
 
-# Module size and complexity limits
-max-module-lines = 200  # Maximum lines per module
-max-class-lines = 200   # Maximum lines per class
+# Complexity limits
 
 # Keep existing ignores but add more reasonable ones
 ignore = [
@@ -45,6 +43,10 @@ ignore = [
 "tests/*" = ["D"]  # Don't require docstrings in tests
 "examples/*" = ["D"]  # Don't require docstrings in examples
 "src/*" = ["D"]  # Don't require docstrings in examples
+"**/*.py" = [
+    # Allow up to 200 lines per module
+    { "max-lines" = 200 }
+]
 
 [flake8-bugbear]
 extend-immutable-calls = ["frozenset", "tuple"]
