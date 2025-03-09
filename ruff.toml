@@ -37,9 +37,6 @@ ignore = [
 [lint.per-file-ignores]
 "tests/*" = ["D"]  # Don't require docstrings in tests
 
-[lint.flake8-comprehensions]
-allow_dict_calls_with_keyword_arguments = true
-
 [lint.flake8-bugbear]
 extend-immutable-calls = ["frozenset", "tuple"]
 
