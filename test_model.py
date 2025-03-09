@@ -110,7 +110,7 @@ def test_predictor_error_handling():
     predictor = dspy.Predict(signature)
     with pytest.raises(TypeError, match="Input must be a dictionary"):
         predictor(None)
-    
+
     # Test missing required input field
     with pytest.raises(ValueError, match="Missing required input field 'text'"):
         predictor({})
