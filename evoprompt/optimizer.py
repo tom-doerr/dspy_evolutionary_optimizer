@@ -128,15 +128,20 @@ class FullyEvolutionaryPromptOptimizer:
         main_panel.add_row("Population", f"[blue]{len(population)}")
         main_panel.add_row("Inference Calls", f"[cyan]{self.inference_count}/{self.max_inference_calls}")
 
-        # Add progress bar
-        progress = ProgressBar(
-            total=self.max_inference_calls,
-            progress=self.inference_count,
-            width=50,
-            style="green",
-            complete_style="bold white on green",
-            pulse_style="bold white on blue"
-        )
+        # Add progress bar with error handling
+        try:
+            progress = ProgressBar(
+                total=self.max_inference_calls,
+                completed=self.inference_count,
+                width=50,
+                style="green",
+                complete_style="bold white on green",
+                pulse_style="bold white on blue"
+            )
+        except Exception as e:
+            if self.debug:
+                print(f"Error creating progress bar: {e}")
+            progress = None
 
         # Best prompt panel
         current_best = max(population, key=lambda x: x["score"] if x["score"] is not None else -float('inf'))["prompt"]
@@ -353,7 +358,7 @@ class FullyEvolutionaryPromptOptimizer:
                     # Add progress bar
                     progress = ProgressBar(
                         total=self.max_inference_calls,
-                        progress=self.inference_count,
+                        completed=self.inference_count,
                         width=50,
                         style="green",
                         complete_style="bold white on green",

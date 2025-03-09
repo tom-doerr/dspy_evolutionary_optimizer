@@ -154,9 +154,17 @@ class TestFullyEvolutionaryPromptOptimizer:
             {"prompt": "prompt2", "score": 0.9, "last_used": 2},
         ]
         
+        # Test normal progress logging
         optimizer._log_progress(iteration=1, population=population)
-        
         captured = capsys.readouterr()
         assert "Iteration" in captured.out
         assert "Best Score" in captured.out
         assert "Population" in captured.out
+        assert "0.8" in captured.out
+        assert "0.9" in captured.out
+        
+        # Test error handling
+        optimizer.max_inference_calls = None  # Invalid value
+        optimizer._log_progress(iteration=1, population=population)
+        captured = capsys.readouterr()
+        assert "Error creating progress bar" in captured.out
