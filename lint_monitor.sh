@@ -12,8 +12,8 @@ while true; do
     # Get current datetime
     TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
     
-    # Append to log file
-    echo "$TIMESTAMP - $LAST_LINE" >> "$LOG_FILE"
+    # Append to log file and echo to stdout
+    echo "$TIMESTAMP - $LAST_LINE" | tee -a "$LOG_FILE"
     
     # Wait 60 seconds
     sleep 60
