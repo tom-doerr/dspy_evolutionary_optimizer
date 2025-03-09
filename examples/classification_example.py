@@ -10,7 +10,7 @@ from evoprompt.visualization import plot_evolution_history
 def main():
     # Initialize the language model
     lm = dspy.LM('openrouter/google/gemini-2.0-flash-001')
-    dspy.settings.configure(lm=lm)
+    dspy.settings.configure(lm=lm, cache=False)
     # Define a simple classification task
     signature = dspy.Signature("text -> label")
     predictor = dspy.Predict(signature)
@@ -34,7 +34,7 @@ def main():
         generations=50,  # Reduced for faster testing
         mutation_rate=0.7,  # Increased for more exploration
         growth_rate=0.4,  # Increased for more population diversity
-        max_population=50  # Limit population size to prevent exponential growth
+        max_population=10  # Limit population size to prevent exponential growth
     )
     
     optimized_predictor = optimizer.compile(predictor, trainset)
