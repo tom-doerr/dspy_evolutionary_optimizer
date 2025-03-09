@@ -1,6 +1,7 @@
+import time
+
 import dspy
 import pytest
-import time
 from pytest_timeout import timeout
 
 from evoprompt.optimizer import FullyEvolutionaryPromptOptimizer
@@ -53,8 +54,8 @@ class TestFullyEvolutionaryPromptOptimizer:
         dspy.configure(lm=lm)
         
         optimizer = FullyEvolutionaryPromptOptimizer(
-            mock_metric, 
-            max_inference_calls=10, 
+            mock_metric,
+            max_inference_calls=10,
             use_mock=True,
             debug=True
         )
