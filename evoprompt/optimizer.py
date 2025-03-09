@@ -353,9 +353,9 @@ class FullyEvolutionaryPromptOptimizer:
                 self._log_progress(iteration, population)
 
         # Finalize and return best prompt
-        return self._finalize_evolution(program, population, iteration)
+        return self._finalize_evolution(program, population, iteration, trainset)
 
-    def _finalize_evolution(self, program, population, iteration):
+    def _finalize_evolution(self, program, population, iteration, trainset):
         """Finalize evolution and return best predictor."""
         # Evaluate any remaining unevaluated prompts
         for chromosome in population:
