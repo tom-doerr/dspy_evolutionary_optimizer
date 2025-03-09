@@ -140,3 +140,20 @@ def test_mock_prediction_validation(mock_metric: Callable[[Any, Any], float]) ->
     example = dspy.Example(text="Test", label="positive")
     with pytest.raises(ValueError):
         optimizer._create_mock_prediction(signature, {}, example)
+
+    # Test valid mock prediction
+    signature = dspy.Signature("text -> label", "Given text, generate a label")
+    example = dspy.Example(text="Test", label="positive")
+    pred = optimizer._create_mock_prediction(signature, {"text": "test"}, example)
+    assert hasattr(pred, "label")
+    assert isinstance(pred.label, str)
+
+    # Test multiple output fields
+    signature = dspy.Signature(
+        "text -> label,score", "Given text, generate label and score"
+    )
+    pred = optimizer._create_mock_prediction(signature, {"text": "test"}, example)
+    assert hasattr(pred, "label")
+    assert hasattr(pred, "score")
+    assert isinstance(pred.label, str)
+    assert isinstance(pred.score, str)

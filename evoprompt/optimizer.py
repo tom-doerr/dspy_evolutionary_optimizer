@@ -57,6 +57,12 @@ class FullyEvolutionaryPromptOptimizer:
     def _initialize_config(self, metric: Callable, kwargs: dict) -> None:
         """Set up optimizer configuration."""
         self.config = OptimizerConfig(metric=metric, **kwargs)
+        # Set direct references to commonly used config values
+        self.max_population = self.config.max_population
+        self.mutation_rate = self.config.mutation_rate
+        self.debug = self.config.debug
+        self.use_mock = self.config.use_mock
+        self.max_inference_calls = self.config.max_inference_calls
 
     def _initialize_state(self) -> None:
         """Initialize optimizer state variables."""
