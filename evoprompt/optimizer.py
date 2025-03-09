@@ -61,7 +61,7 @@ class FullyEvolutionaryPromptOptimizer:
         """Select a prompt using Pareto distribution to favor top performers."""
         scored_population = [p for p in population if p["score"] is not None]
         if not scored_population:
-            return random.choice(population)  # noqa: S311
+            return random.choice(population)
         
         return self._select_using_pareto(scored_population)
 
@@ -84,7 +84,7 @@ class FullyEvolutionaryPromptOptimizer:
         probs = [w / total for w in weights]
         
         # Select using weighted probabilities
-        return random.choices(scored_population, weights=probs, k=1)[0]  # noqa: S311
+        return random.choices(scored_population, weights=probs, k=1)[0]
 
     def _update_population(self, population, iteration, recent_scores):
         """Update population based on scores and iteration."""
@@ -223,7 +223,7 @@ class FullyEvolutionaryPromptOptimizer:
         selected = self._select_prompt(population)
         
         # Evaluate the selected prompt on a random example
-        example = random.choice(trainset)  # noqa: S311
+        example = random.choice(trainset)
         selected["score"] = self._evaluate(program, selected["prompt"], [example])
         selected["last_used"] = iteration
         recent_scores.append(selected["score"])
@@ -244,7 +244,7 @@ class FullyEvolutionaryPromptOptimizer:
             self._mate_high_performers(population, selected, top_20_percentile, iteration)
 
         # Apply mutation to selected prompt
-        if random.random() < self.mutation_rate:  # noqa: S311
+        if random.random() < self.mutation_rate:
             self._apply_mutation(population, selected, iteration)
 
         return population, recent_scores
@@ -274,7 +274,7 @@ class FullyEvolutionaryPromptOptimizer:
             probs = [w / total for w in weights]
             
             # Select mate using Pareto distribution
-            mate = random.choices(high_performers, weights=probs, k=1)[0]  # noqa: S311
+            mate = random.choices(high_performers, weights=probs, k=1)[0]
             
             # Create new prompt through crossover
             new_prompt = self._crossover(selected["prompt"], mate["prompt"])
@@ -293,7 +293,7 @@ class FullyEvolutionaryPromptOptimizer:
         """Select a prompt probabilistically based on score."""
         scored_population = [p for p in population if p["score"] is not None]
         if not scored_population:
-            return random.choice(population)  # noqa: S311
+            return random.choice(population)
         
         return self._select_using_normalized_scores(scored_population)
 
@@ -304,12 +304,12 @@ class FullyEvolutionaryPromptOptimizer:
         max_score = max(scores)
         
         if max_score == min_score:
-            return random.choice(scored_population)  # noqa: S311
+            return random.choice(scored_population)
             
         normalized_scores = [(s - min_score) / (max_score - min_score) for s in scores]
         total = sum(normalized_scores)
         probs = [s / total for s in normalized_scores]
-        return random.choices(scored_population, weights=probs, k=1)[0]  # noqa: S311
+        return random.choices(scored_population, weights=probs, k=1)[0]
 
     def _update_population(self, population, iteration, recent_scores):
         """Update population based on scores and iteration."""
@@ -337,7 +337,7 @@ class FullyEvolutionaryPromptOptimizer:
         selected = self._select_prompt(population)
         
         # Evaluate the selected prompt on a random example
-        example = random.choice(trainset)  # noqa: S311
+        example = random.choice(trainset)
         selected["score"] = self._evaluate(program, selected["prompt"], [example])
         selected["last_used"] = iteration
         recent_scores.append(selected["score"])
@@ -358,7 +358,7 @@ class FullyEvolutionaryPromptOptimizer:
             self._mate_high_performers(population, selected, top_20_percentile, iteration)
 
         # Apply mutation to selected prompt
-        if random.random() < self.mutation_rate:  # noqa: S311
+        if random.random() < self.mutation_rate:
             self._apply_mutation(population, selected, iteration)
 
         return population, recent_scores
@@ -371,7 +371,7 @@ class FullyEvolutionaryPromptOptimizer:
                          and p != selected]
 
         if high_performers:
-            mate = random.choice(high_performers)  # noqa: S311
+            mate = random.choice(high_performers)
             new_prompt = self._crossover(selected["prompt"], mate["prompt"])
             population.append({"prompt": new_prompt, "score": None, "last_used": iteration})
 
@@ -507,7 +507,7 @@ class FullyEvolutionaryPromptOptimizer:
             print("  Inference call limit reached, using mock prediction")
         
         # Simulate realistic API latency between 0.1-0.5 seconds
-        latency = random.uniform(0.1, 0.5)  # noqa: S311
+        latency = random.uniform(0.1, 0.5)
         time.sleep(latency)
         
         pred = self._create_mock_prediction(predictor.signature, input_kwargs, example)
@@ -702,7 +702,7 @@ class FullyEvolutionaryPromptOptimizer:
         if not p1_parts or not p2_parts:
             return prompt1
         min_len = min(len(p1_parts), len(p2_parts))
-        crossover_point = random.randint(0, min_len)  # noqa: S311
+        crossover_point = random.randint(0, min_len)
         return " ".join(p1_parts[:crossover_point] + p2_parts[crossover_point:])
 
     def _ensure_placeholders(self, prompt):
@@ -722,28 +722,28 @@ class FullyEvolutionaryPromptOptimizer:
         """Return list of mutation functions."""
         return [
             # Add instructional phrases
-            lambda p: p + " " + random.choice([  # noqa: S311
+            lambda p: p + " " + random.choice([
                 "to generate", "with details", "for classification", "-> answer",
                 "analyze and respond", "consider carefully", "be concise", "keep it short"
             ]),
 
             # Remove some words (but preserve placeholders)
-            lambda p: " ".join(w for w in p.split() if "{{input}}" in w or "{{output}}" in w or random.random() > 0.2),  # noqa: S311
+            lambda p: " ".join(w for w in p.split() if "{{input}}" in w or "{{output}}" in w or random.random() > 0.2),
 
             # Enhance input placeholder
-            lambda p: p.replace("{{input}}", random.choice([  # noqa: S311
+            lambda p: p.replace("{{input}}", random.choice([
                 "Input: {{input}}", "{{input}} here", "Given {{input}}",
                 "Consider {{input}}", "Analyze {{input}}", "From {{input}}"
             ])),
 
             # Enhance output placeholder
-            lambda p: p.replace("{{output}}", random.choice([  # noqa: S311
+            lambda p: p.replace("{{output}}", random.choice([
                 "-> {{output}}", "{{output}} result", "yields {{output}}",
                 "produce {{output}}", "return {{output}}", "output: {{output}}"
             ])),
 
             # Add task-specific instructions
-            lambda p: p + " " + random.choice([  # noqa: S311
+            lambda p: p + " " + random.choice([
                 "Be concise.", "Explain reasoning.", "Be accurate.",
                 "Consider all aspects.", "Focus on key points.",
                 "Be specific.", "Be brief.", "Be clear.",
@@ -751,7 +751,7 @@ class FullyEvolutionaryPromptOptimizer:
             ]),
 
             # Add general quality instructions
-            lambda p: p + " " + random.choice([  # noqa: S311
+            lambda p: p + " " + random.choice([
                 "Ensure high quality.", "Maximize accuracy.",
                 "Optimize for clarity.", "Be comprehensive yet concise.",
                 "Focus on relevance.", "Prioritize correctness.",
@@ -759,7 +759,7 @@ class FullyEvolutionaryPromptOptimizer:
             ]),
 
             # Character-level mutations (limited to avoid breaking placeholders)
-            lambda p: p.replace(" ", " " + random.choice(["", "", "", "really ", "carefully ", "properly ", "thoroughly "]))  # noqa: S311
+            lambda p: p.replace(" ", " " + random.choice(["", "", "", "really ", "carefully ", "properly ", "thoroughly "]))
         ]
 
     def _mutate(self, prompt: str) -> str:
@@ -776,9 +776,9 @@ class FullyEvolutionaryPromptOptimizer:
         mutations = self._get_mutations()
         
         # Apply 1-2 mutations
-        num_mutations = random.randint(1, 2)  # noqa: S311
+        num_mutations = random.randint(1, 2)
         for _ in range(num_mutations):
-            prompt = random.choice(mutations)(prompt)  # noqa: S311
+            prompt = random.choice(mutations)(prompt)
 
         return prompt
 
