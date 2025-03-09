@@ -39,13 +39,15 @@ ignore = [
     "PLR2004",  # Magic value used
 ]
 
-[lint.per-file-ignores]
-"tests/*" = ["D"]  # Don't require docstrings in tests
-"examples/*" = ["D"]  # Don't require docstrings in examples
-"src/*" = ["D"]  # Don't require docstrings in examples
-"**/*.py" = [
-    # Allow up to 200 lines per module
-    { "max-lines" = 200 }
+[lint]
+# Global settings
+max-lines = 200  # Maximum lines per module
+
+# Per-file ignores
+per-file-ignores = [
+    { "glob" = "tests/*", "ignore" = ["D"] },  # Don't require docstrings in tests
+    { "glob" = "examples/*", "ignore" = ["D"] },  # Don't require docstrings in examples
+    { "glob" = "src/*", "ignore" = ["D"] }  # Don't require docstrings in source
 ]
 
 [flake8-bugbear]
@@ -62,13 +64,7 @@ lines-between-types = 1
 [mccabe]
 max-complexity = 5  # McCabe cyclomatic complexity
 
-[pylint]
-max-args = 3        # Maximum number of function arguments
-max-locals = 15     # Maximum number of local variables
-max-statements = 50 # Maximum number of statements per function
-max-branches = 12   # Maximum number of branches per function
-max-returns = 4     # Maximum number of return statements
-max-attributes = 5  # Maximum number of class attributes
+# Removed redundant pylint settings since we're using Ruff's built-in complexity checks
 
 # Enable additional Ruff-specific rules
 allow-star-arg-unpacking = false
