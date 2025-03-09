@@ -7,9 +7,7 @@ import time
 from statistics import mean
 import dspy
 import os
-from textual.app import App
-from textual.containers import Container
-from textual.widgets import Header, Footer, Static, ProgressBar
+from textual.widgets import ProgressBar
 from rich.table import Table
 from rich.console import Console
 
