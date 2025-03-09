@@ -11,7 +11,7 @@ from textual.widgets import ProgressBar
 from rich.table import Table
 from rich.console import Console
 from rich.panel import Panel
-from rich.layout import Group
+from rich.console import Group
 
 
 class FullyEvolutionaryPromptOptimizer:
