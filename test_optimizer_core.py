@@ -135,7 +135,7 @@ def test_parallel_execution_edge_cases(
     mock_metric: Callable[[Any, Any], float],
 ) -> None:
     """Test edge cases in parallel execution."""
-    optimizer = FullyEvolutionaryPromptOptimizer(metric=_mock_metric, max_workers=2)
+    optimizer = FullyEvolutionaryPromptOptimizer(metric=mock_metric, max_workers=2)
 
     # Test empty examples
     signature = dspy.Signature("text -> label", "Given text, generate a label")
@@ -176,8 +176,19 @@ def test_mock_prediction_validation(mock_metric: Callable[[Any, Any], float]) ->
     optimizer.config.use_mock = True
 
     # Test invalid signature
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Signature cannot be None"):
         optimizer._create_mock_prediction(None, {}, None)
+
+    # Test empty input kwargs
+    signature = dspy.Signature("text -> label", "Given text, generate a label")
+    example = dspy.Example(text="Test", label="positive")
+    with pytest.raises(ValueError, match="Input kwargs cannot be empty"):
+        optimizer._create_mock_prediction(signature, {}, example)
+
+    # Test valid mock prediction
+    pred = optimizer._create_mock_prediction(signature, {"text": "test"}, example)
+    assert hasattr(pred, "label")
+    assert isinstance(pred.label, str)
 
     # Test empty input kwargs
     signature = dspy.Signature("text -> label", "Given text, generate a label")

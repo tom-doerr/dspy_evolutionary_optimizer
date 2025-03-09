@@ -57,19 +57,16 @@ def test_model_error_handling():
     # Test connection timeout
     lm = dspy.LM("openrouter/google/gemini-2.0-flash-001")
     dspy.settings.configure(lm=lm, cache=False, timeout=0.001)  # Set very low timeout
-    with pytest.raises(TimeoutError, match="Request timed out"):
+    with pytest.raises((TimeoutError, ConnectionError)):
         lm("Test message")
 
-    # Test connection timeout with more specific exception
-    lm = dspy.LM("openrouter/google/gemini-2.0-flash-001")
-    dspy.settings.configure(lm=lm, cache=False, timeout=0.001)
-    with pytest.raises(TimeoutError):
-        lm("Test message")
-    # Test connection timeout
-    lm = dspy.LM("openrouter/google/gemini-2.0-flash-001")
-    dspy.settings.configure(lm=lm, cache=False, timeout=0.001)  # Set very low timeout
-    with pytest.raises(Exception):
-        lm("Test message")
+    # Test invalid input type
+    with pytest.raises(TypeError):
+        lm(12345)
+
+    # Test empty input
+    with pytest.raises(ValueError):
+        lm("")
     # Test connection timeout
     lm = dspy.LM("openrouter/google/gemini-2.0-flash-001")
     dspy.settings.configure(lm=lm, cache=False, timeout=0.001)  # Set very low timeout

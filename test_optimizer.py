@@ -40,7 +40,7 @@ def mock_signature() -> dspy.Signature:
 def test_optimizer_initialization(mock_metric: Callable[[Any, Any], float]) -> None:
     """Test optimizer initialization with various parameters."""
     optimizer = FullyEvolutionaryPromptOptimizer(
-        metric=_mock_metric,
+        metric=mock_metric,
         generations=5,
         mutation_rate=0.5,
         growth_rate=0.3,
@@ -50,6 +50,16 @@ def test_optimizer_initialization(mock_metric: Callable[[Any, Any], float]) -> N
 
     # Verify configuration
     assert optimizer.config.metric == mock_metric
+    assert optimizer.config.generations == 5
+    assert optimizer.config.mutation_rate == 0.5
+    assert optimizer.config.growth_rate == 0.3
+    assert optimizer.config.max_population == 20
+    assert optimizer.config.debug is True
+
+    # Verify state initialization
+    assert optimizer.state.inference_count == 0
+    assert optimizer.state.population == []
+    assert optimizer.state.history == []
     assert optimizer.config.generations == 5
     assert optimizer.config.mutation_rate == 0.5
     assert optimizer.config.growth_rate == 0.3
@@ -602,13 +612,29 @@ def test_parameter_validation(metric_fixture: Callable[[Any, Any], float]) -> No
         FullyEvolutionaryPromptOptimizer(mock_metric, max_workers=-1)
 
 
-def test_population_handling(metric_fixture: Callable[[Any, Any], float]) -> None:
+def test_population_handling(metric_fixture: Callable[[Any, Any], float) -> None:
     """Test population handling and evolution logic."""
-    optimizer = FullyEvolutionaryPromptOptimizer(metric=_metric_fixture)
+    optimizer = FullyEvolutionaryPromptOptimizer(metric=metric_fixture)
 
     # Test empty population
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Cannot update empty population"):
         optimizer._update_population([], iteration=1, recent_scores=[])
+
+    # Test invalid population type
+    with pytest.raises(TypeError):
+        optimizer._update_population("not a list", iteration=1, recent_scores=[])
+
+    # Test valid population initialization
+    population = optimizer._initialize_population()
+    assert len(population) == 1
+    assert isinstance(population[0]["chromosome"], Chromosome)
+    assert population[0]["score"] is None
+
+    # Test population update
+    updated = optimizer._update_population(
+        population, iteration=1, recent_scores=[0.9, 0.8]
+    )
+    assert len(updated) <= optimizer.config.max_population
 
     # Test population initialization
     population = optimizer._initialize_population()
