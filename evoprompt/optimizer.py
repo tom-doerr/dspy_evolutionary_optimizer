@@ -35,6 +35,7 @@ class FullyEvolutionaryPromptOptimizer:
             debug: Enable debug logging
             use_mock: Force mock mode (True/False) or auto-detect if None
             max_workers: Number of parallel workers for evaluation (1 = serial)
+
         """
         self.metric = metric
         self.generations = generations
@@ -630,6 +631,7 @@ class FullyEvolutionaryPromptOptimizer:
             
         Returns:
             Average score across all examples
+
         """
         try:
             if self.debug:
@@ -649,7 +651,7 @@ class FullyEvolutionaryPromptOptimizer:
 
     def _parallel_evaluate(self, program, prompt, trainset):
         """Evaluate prompt using parallel workers."""
-        from concurrent.futures import ThreadPoolExecutor, as_completed
+        from concurrent.futures import as_completed, ThreadPoolExecutor
         
         predictor = dspy.Predict(program.signature, prompt=prompt)
         scores = []
@@ -659,9 +661,9 @@ class FullyEvolutionaryPromptOptimizer:
             for ex in trainset:
                 input_kwargs = self._get_input_kwargs(program, ex)
                 futures.append(executor.submit(
-                    self._make_single_prediction, 
-                    predictor, 
-                    input_kwargs, 
+                    self._make_single_prediction,
+                    predictor,
+                    input_kwargs,
                     ex
                 ))
             
