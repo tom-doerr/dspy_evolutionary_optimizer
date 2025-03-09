@@ -39,15 +39,16 @@ ignore = [
     "PLR2004",  # Magic value used
 ]
 
-# Global settings
-max-lines = 200  # Maximum lines per module
-
 # Per-file ignores
 per-file-ignores = [
     { "glob" = "tests/*", "ignore" = ["D"] },  # Don't require docstrings in tests
     { "glob" = "examples/*", "ignore" = ["D"] },  # Don't require docstrings in examples
     { "glob" = "src/*", "ignore" = ["D"] }  # Don't require docstrings in source
 ]
+
+# Complexity settings
+[mccabe]
+max-complexity = 5  # McCabe cyclomatic complexity
 
 [flake8-bugbear]
 extend-immutable-calls = ["frozenset", "tuple"]
