@@ -135,10 +135,10 @@ class FullyEvolutionaryPromptOptimizer:
         # Select using weighted probabilities
         return random.choices(scored_population, weights=probs, k=1)[0]
 
-    def _update_population(self, 
+    def _update_population(self,
                          population: List[Dict[str, Any]],
                          iteration: int,
-                         recent_scores: List[float]]) -> List[Dict[str, Any]]:
+                         recent_scores: List[float]) -> List[Dict[str, Any]]:
         """Update population based on scores and iteration.
         
         Args:
