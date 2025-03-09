@@ -10,7 +10,7 @@ ignore=pyproject.toml
 disable=missing-module-docstring,missing-class-docstring,missing-function-docstring
 
 [DESIGN]
-max-args=5
+max-args=3
 max-locals=15
 max-statements=50
 max-branches=20
@@ -19,6 +19,3 @@ max-attributes=10
 max-public-methods=20
 max-parents=7
 
-[BASIC]
-# Good variable names to ignore
-good-names=i,j,k,ex,Run,_,e,f,x,y,z
