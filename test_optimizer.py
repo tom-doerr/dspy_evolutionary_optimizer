@@ -1,5 +1,5 @@
-import pytest
 from evoprompt.optimizer import FullyEvolutionaryPromptOptimizer
+
 
 def test_optimizer_initialization():
     """Test basic optimizer initialization."""
