@@ -4,7 +4,7 @@ import copy
 import os
 import random
 import time
-from concurrent.futures import as_completed, ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor
 from statistics import mean
 
 # Third-party imports
@@ -43,17 +43,17 @@ class FullyEvolutionaryPromptOptimizer:
             max_workers: Number of parallel workers for evaluation (1 = serial)
 
         """
-        self.metric = metric
-        self.generations = generations
-        self.mutation_rate = mutation_rate
-        self.growth_rate = growth_rate
-        self.max_population = max_population
-        self.max_workers = max_workers
-        self.history = []  # Store evolution stats per generation
-        self.population = []  # Initialize population
-        self.debug = debug
-        self.inference_count = 0
-        self.max_inference_calls = max_inference_calls
+        self.config = OptimizerConfig(
+            metric=metric,
+            generations=generations,
+            mutation_rate=mutation_rate,
+            growth_rate=growth_rate,
+            max_population=max_population,
+            max_workers=max_workers,
+            debug=debug,
+            max_inference_calls=max_inference_calls
+        )
+        self.state = OptimizerState()
 
         # Determine if we should use mock mode
         if use_mock is None:
@@ -130,13 +130,10 @@ class FullyEvolutionaryPromptOptimizer:
         try:
             return ProgressBar(
                 total=self.max_inference_calls,
-                progress=self.inference_count,
-                width=50,
-                style="green",
-                complete_style="bold white on green",
-                pulse_style="bold white on blue"
+                completed=self.inference_count,
+                width=50
             )
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             if self.debug:
                 print(f"Error creating progress bar: {e}")
             return f"[Progress: {self.inference_count}/{self.max_inference_calls}]"
@@ -235,7 +232,7 @@ class FullyEvolutionaryPromptOptimizer:
         }]
         return self.population
 
-    def _process_population(self, population, iteration, recent_scores, program, trainset):
+    def _process_population(self, population_params):
         """Process one iteration of population evolution."""
         # Select a prompt probabilistically based on score
         selected = self._select_prompt(population)
@@ -675,11 +672,11 @@ class FullyEvolutionaryPromptOptimizer:
 
             if self.max_workers > 1:
                 return self._parallel_evaluate(program, prompt, trainset)
-            else:
-                predictions = self._make_predictions(program, prompt, trainset)
-                if not predictions:
-                    return 0.0
-                return self._evaluate_predictions(predictions, trainset)
+            
+            predictions = self._make_predictions(program, prompt, trainset)
+            if not predictions:
+                return 0.0
+            return self._evaluate_predictions(predictions, trainset)
 
         except Exception as e:
             print(f"Evaluation error: {e}")
@@ -687,7 +684,6 @@ class FullyEvolutionaryPromptOptimizer:
 
     def _parallel_evaluate(self, program, prompt, trainset):
         """Evaluate prompt using parallel workers."""
-        from concurrent.futures import as_completed, ThreadPoolExecutor
         
         predictor = dspy.Predict(program.signature, prompt=prompt)
         scores = []
@@ -706,7 +702,7 @@ class FullyEvolutionaryPromptOptimizer:
             for future in as_completed(futures):
                 try:
                     pred = future.result()
-                    score = self.metric(pred, ex)
+                    score = self.metric(pred, future.example)
                     scores.append(score)
                 except Exception as e:
                     print(f"Parallel evaluation error: {e}")
