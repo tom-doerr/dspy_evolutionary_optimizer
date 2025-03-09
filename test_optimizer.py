@@ -32,7 +32,7 @@ def basic_optimizer_fixture(
 
 @pytest.fixture
 def mock_signature() -> dspy.Signature:
-    signature = dspy.Signature("text -> label", "Given text, generate a label")
+    signature = dspy.Signature("text -> label")
     signature.__doc__ = "Given text, generate a label"
     return signature
 
@@ -68,7 +68,7 @@ def test_parallel_initialization(_metric_fixture: Callable[[Any, Any], float]) -
 
 
 def test_population_initialization(
-    basic_optimizer_fixture: FullyEvolutionaryPromptOptimizer,
+    _basic_optimizer_fixture: FullyEvolutionaryPromptOptimizer,
 ) -> None:
     # Access protected member for testing purposes
     # pylint: disable=protected-access
@@ -170,7 +170,7 @@ def _test_parameter_validation_cases(
 
 
 def test_parameter_validation(metric_fixture: Callable[[Any, Any], float]) -> None:
-    """Test validation of optimizer parameters."""
+    # Remove duplicate docstring
     # Test valid parameters
     optimizer = FullyEvolutionaryPromptOptimizer(
         metric=metric_fixture,
@@ -512,7 +512,7 @@ def test_parameter_validation(metric_fixture: Callable[[Any, Any], float]) -> No
     # Test invalid generations
     with pytest.raises(ValueError):
         FullyEvolutionaryPromptOptimizer(
-            metric=mock_metric, generations=0
+            metric=_mock_metric, generations=0
         )  # pylint: disable=undefined-variable
     with pytest.raises(ValueError):
         FullyEvolutionaryPromptOptimizer(mock_metric, generations=-1)

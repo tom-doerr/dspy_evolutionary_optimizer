@@ -41,7 +41,7 @@ def test_parallel_evaluation(_mock_metric: Callable[[Any, Any], float]) -> None:
     assert 0 <= score <= 1.0
     optimizer = FullyEvolutionaryPromptOptimizer(metric=mock_metric, max_workers=2)
 
-    signature = dspy.Signature("text -> label", "Given text, generate a label")
+    signature = dspy.Signature("text -> label")
     program = dspy.Predict(signature)
 
     examples = [
@@ -93,7 +93,7 @@ def test_mock_prediction(_mock_metric: Callable[[Any, Any], float]) -> None:
     assert isinstance(pred.label, str)
 
 
-def test_evolution_history(mock_metric: Callable[[Any, Any], float]) -> None:
+def test_evolution_history(_mock_metric: Callable[[Any, Any], float]) -> None:
     optimizer = FullyEvolutionaryPromptOptimizer(metric=mock_metric)
     population = optimizer._initialize_population()
     optimizer._log_progress(1, population)
