@@ -132,7 +132,7 @@ class FullyEvolutionaryPromptOptimizer:
         try:
             progress = ProgressBar(
                 total=self.max_inference_calls,
-                completed=self.inference_count,
+                progress=self.inference_count,
                 width=50,
                 style="green",
                 complete_style="bold white on green",
@@ -141,7 +141,8 @@ class FullyEvolutionaryPromptOptimizer:
         except Exception as e:
             if self.debug:
                 print(f"Error creating progress bar: {e}")
-            progress = None
+            # Create a simple text-based progress display as fallback
+            progress = f"[Progress: {self.inference_count}/{self.max_inference_calls}]"
 
         # Best prompt panel
         current_best = max(population, key=lambda x: x["score"] if x["score"] is not None else -float('inf'))["prompt"]
@@ -168,19 +169,29 @@ class FullyEvolutionaryPromptOptimizer:
                 str(entry['population_size'])
             )
 
+        # Create the layout components
+        layout_components = [main_panel, prompt_panel, history_table]
+        if progress is not None:
+            layout_components.insert(1, progress)
+            
         # Layout the panels
-        console.print(Panel(
-            Group(
-                main_panel,
-                progress,
-                prompt_panel,
-                history_table
-            ),
-            title=f"[bold]Evolution Progress - Generation {iteration}",
-            border_style="green",
-            padding=(1, 2),
-            width=80
-        ))
+        try:
+            console.print(Panel(
+                Group(*layout_components),
+                title=f"[bold]Evolution Progress - Generation {iteration}",
+                border_style="green",
+                padding=(1, 2),
+                width=80
+            ))
+        except Exception as e:
+            if self.debug:
+                print(f"Error rendering progress display: {e}")
+            # Fallback to simple text output
+            console.print(f"[bold]Generation {iteration}")
+            console.print(f"Best Score: {best_score:.3f}")
+            console.print(f"Avg Score: {avg_score:.3f}")
+            console.print(f"Population: {len(population)}")
+            console.print(f"Inference Calls: {self.inference_count}/{self.max_inference_calls}")
 
         # Add some spacing
         console.print()
