@@ -238,6 +238,97 @@ class FullyEvolutionaryPromptOptimizer:
         mutated = self._mutate(selected["prompt"])
         population.append({"prompt": mutated, "score": None, "last_used": iteration})
 
+    def _initialize_evolution(self):
+        """Initialize evolution parameters and population."""
+        return [{"prompt": "{{input}} {{output}}", "score": None, "last_used": 0}], [], 0
+
+    def _select_prompt(self, population):
+        """Select a prompt probabilistically based on score."""
+        scored_population = [p for p in population if p["score"] is not None]
+        if not scored_population:
+            return random.choice(population)
+        
+        scores = [p["score"] for p in scored_population]
+        min_score = min(scores)
+        max_score = max(scores)
+        
+        if max_score == min_score:
+            return random.choice(scored_population)
+            
+        normalized_scores = [(s - min_score) / (max_score - min_score) for s in scores]
+        total = sum(normalized_scores)
+        probs = [s / total for s in normalized_scores]
+        return random.choices(scored_population, weights=probs, k=1)[0]
+
+    def _update_population(self, population, iteration, recent_scores):
+        """Update population based on scores and iteration."""
+        if recent_scores:
+            recent_scores_sorted = sorted(recent_scores)
+            _ = recent_scores_sorted[int(len(recent_scores_sorted) * 0.8)]  # Calculate but don't use percentile
+            
+        # Remove stale prompts
+        population = [p for p in population
+                     if iteration - p["last_used"] < 10
+                     or p["score"] is None]
+        
+        # Enforce population size limit
+        if len(population) > self.max_population:
+            scored_population = [p for p in population if p["score"] is not None]
+            if len(scored_population) > self.max_population:
+                scored_population.sort(key=lambda x: x["score"])
+                population = scored_population[-self.max_population:]
+                
+        return population
+
+    def _process_generation(self, population, recent_scores, iteration, program, trainset):
+        """Process one generation of evolution."""
+        # Select a prompt probabilistically based on score
+        selected = self._select_prompt(population)
+        
+        # Evaluate the selected prompt on a random example
+        example = random.choice(trainset)
+        selected["score"] = self._evaluate(program, selected["prompt"], [example])
+        selected["last_used"] = iteration
+        recent_scores.append(selected["score"])
+
+        # Keep recent scores window (last 20 scores)
+        if len(recent_scores) > 20:
+            recent_scores.pop(0)
+
+        # Calculate recent score thresholds
+        if recent_scores:
+            recent_scores_sorted = sorted(recent_scores)
+            top_20_percentile = recent_scores_sorted[int(len(recent_scores_sorted) * 0.8)]
+        else:
+            top_20_percentile = 0
+
+        # If this score is in top 20%, mate it with another high performer
+        if selected["score"] >= top_20_percentile:
+            self._mate_high_performers(population, selected, top_20_percentile, iteration)
+
+        # Apply mutation to selected prompt
+        if random.random() < self.mutation_rate:
+            self._apply_mutation(population, selected, iteration)
+
+        return population, recent_scores
+
+    def _mate_high_performers(self, population, selected, top_20_percentile, iteration):
+        """Mate high performing prompts."""
+        high_performers = [p for p in population
+                         if p["score"] is not None
+                         and p["score"] >= top_20_percentile
+                         and p != selected]
+
+        if high_performers:
+            mate = random.choice(high_performers)
+            new_prompt = self._crossover(selected["prompt"], mate["prompt"])
+            population.append({"prompt": new_prompt, "score": None, "last_used": iteration})
+
+    def _apply_mutation(self, population, selected, iteration):
+        """Apply mutation to a selected prompt."""
+        mutated = self._mutate(selected["prompt"])
+        population.append({"prompt": mutated, "score": None, "last_used": iteration})
+
     def compile(self, program, trainset):
         """
         Evolve prompts using continuous probabilistic selection and mating.
@@ -249,165 +340,24 @@ class FullyEvolutionaryPromptOptimizer:
         Returns:
             A DSPy Predict module with the optimized prompt
         """
-        # Start with a single seed prompt
-        population = [{"prompt": "{{input}} {{output}}", "score": None, "last_used": 0}]
-        recent_scores = []  # Track recent scores for percentile calculation
-        iteration = 0
+        population, recent_scores, iteration = self._initialize_evolution()
 
-        # Keep evolving until we hit inference limit or complete all examples
         while self.inference_count < self.max_inference_calls or self.max_inference_calls <= 0:
             iteration += 1
-
-            # Select a prompt probabilistically based on score
-            scored_population = [p for p in population if p["score"] is not None]
-            if not scored_population:
-                # If no scored prompts, pick randomly
-                selected = random.choice(population)
-            else:
-                # Calculate selection probabilities based on normalized scores
-                scores = [p["score"] for p in scored_population]
-                min_score = min(scores)
-                max_score = max(scores)
-                if max_score == min_score:
-                    # All scores equal, pick randomly
-                    selected = random.choice(scored_population)
-                else:
-                    # Normalize scores and calculate probabilities
-                    normalized_scores = [(s - min_score) / (max_score - min_score) for s in scores]
-                    total = sum(normalized_scores)
-                    probs = [s / total for s in normalized_scores]
-                    selected = random.choices(scored_population, weights=probs, k=1)[0]
-
-            # Evaluate the selected prompt on a random example
-            example = random.choice(trainset)
-            selected["score"] = self._evaluate(program, selected["prompt"], [example])
-            selected["last_used"] = iteration
-            recent_scores.append(selected["score"])
-
-            # Keep recent scores window (last 20 scores)
-            if len(recent_scores) > 20:
-                recent_scores.pop(0)
-
-            # Calculate recent score thresholds
-            if recent_scores:
-                recent_scores_sorted = sorted(recent_scores)
-                top_20_percentile = recent_scores_sorted[int(len(recent_scores_sorted) * 0.8)]
-            else:
-                top_20_percentile = 0
-
-            # If this score is in top 20%, mate it with another high performer
-            if selected["score"] >= top_20_percentile:
-                # Find another high performer to mate with
-                high_performers = [p for p in population
-                                 if p["score"] is not None
-                                 and p["score"] >= top_20_percentile
-                                 and p != selected]
-
-                if high_performers:
-                    mate = random.choice(high_performers)
-                    new_prompt = self._crossover(selected["prompt"], mate["prompt"])
-                    population.append({"prompt": new_prompt, "score": None, "last_used": iteration})
-
-            # Apply mutation to selected prompt
-            if random.random() < self.mutation_rate:
-                mutated = self._mutate(selected["prompt"])
-                population.append({"prompt": mutated, "score": None, "last_used": iteration})
-
-            # Remove stale prompts (not used in last 10 iterations)
-            population = [p for p in population
-                         if iteration - p["last_used"] < 10
-                         or p["score"] is None]
-
-            # Enforce population size limit
-            if len(population) > self.max_population:
-                # Remove lowest scoring prompts first
-                scored_population = [p for p in population if p["score"] is not None]
-                if len(scored_population) > self.max_population:
-                    scored_population.sort(key=lambda x: x["score"])
-                    population = scored_population[-self.max_population:]
-
+            population, recent_scores = self._process_generation(
+                population, recent_scores, iteration, program, trainset
+            )
+            
             # Log progress periodically
             if iteration % 10 == 0:
-                scores = [p["score"] for p in population if p["score"] is not None]
-                if scores:
-                    best_score = max(scores)
-                    avg_score = mean(scores)
-                    self.history.append({
-                        "iteration": iteration,
-                        "best_score": best_score,
-                        "avg_score": avg_score,
-                        "population_size": len(population),
-                        "best_prompt": max(population, key=lambda x: x["score"] if x["score"] is not None else -float('inf'))["prompt"]
-                    })
+                self._log_progress(iteration, population)
 
-                    # Create detailed progress display
-                    console = Console()
+        # Finalize and return best prompt
+        return self._finalize_evolution(program, population, iteration)
 
-                    # Main progress panel
-                    main_panel = Table.grid(padding=(1, 2))
-                    main_panel.add_column(justify="left", style="cyan")
-                    main_panel.add_column(justify="right", style="magenta")
-
-                    # Add current stats
-                    main_panel.add_row("Iteration", f"[bold]{iteration}")
-                    main_panel.add_row("Best Score", f"[green]{best_score:.3f}")
-                    main_panel.add_row("Avg Score", f"[yellow]{avg_score:.3f}")
-                    main_panel.add_row("Population", f"[blue]{len(population)}")
-                    main_panel.add_row("Inference Calls", f"[cyan]{self.inference_count}/{self.max_inference_calls}")
-
-                    # Add progress bar
-                    progress = ProgressBar(
-                        total=self.max_inference_calls,
-                        completed=self.inference_count,
-                        width=50,
-                        style="green",
-                        complete_style="bold white on green",
-                        pulse_style="bold white on blue"
-                    )
-
-                    # Best prompt panel
-                    current_best = max(population, key=lambda x: x["score"] if x["score"] is not None else -float('inf'))["prompt"]
-                    prompt_panel = Panel(
-                        current_best,
-                        title="[bold]Best Prompt",
-                        border_style="blue",
-                        padding=(1, 2),
-                        width=80
-                    )
-
-                    # Recent history table
-                    history_table = Table(title="[bold]Recent History", show_header=True, header_style="bold magenta")
-                    history_table.add_column("Iteration", justify="right")
-                    history_table.add_column("Best Score", justify="right")
-                    history_table.add_column("Avg Score", justify="right")
-                    history_table.add_column("Population", justify="right")
-
-                    for entry in self.history[-5:]:
-                        history_table.add_row(
-                            str(entry['iteration']),
-                            f"{entry['best_score']:.3f}",
-                            f"{entry['avg_score']:.3f}",
-                            str(entry['population_size'])
-                        )
-
-                    # Layout the panels
-                    console.print(Panel(
-                        Group(
-                            main_panel,
-                            progress,
-                            prompt_panel,
-                            history_table
-                        ),
-                        title=f"[bold]Evolution Progress - Generation {iteration}",
-                        border_style="green",
-                        padding=(1, 2),
-                        width=80
-                    ))
-
-                    # Add some spacing
-                    console.print()
-
-        # Make sure all chromosomes are evaluated before sorting
+    def _finalize_evolution(self, program, population, iteration):
+        """Finalize evolution and return best predictor."""
+        # Evaluate any remaining unevaluated prompts
         for chromosome in population:
             if chromosome["score"] is None:
                 chromosome["score"] = self._evaluate(program, chromosome["prompt"], trainset)
@@ -415,10 +365,9 @@ class FullyEvolutionaryPromptOptimizer:
         # Sort by score and return best predictor
         population.sort(key=lambda x: x["score"], reverse=True)
         best_prompt = population[0]["prompt"]
+        
         # Create final summary display
         console = Console()
-
-        # Main summary panel
         summary_panel = Table.grid(padding=(1, 2))
         summary_panel.add_column(justify="left", style="cyan")
         summary_panel.add_column(justify="right", style="magenta")
@@ -448,6 +397,7 @@ class FullyEvolutionaryPromptOptimizer:
             padding=(1, 2),
             width=80
         ))
+        
         return dspy.Predict(program.signature, prompt=best_prompt)
 
     def _make_prediction(self, program, prompt, input_kwargs):
