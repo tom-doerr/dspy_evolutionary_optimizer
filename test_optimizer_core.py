@@ -157,3 +157,54 @@ def test_evolution_history():
     assert "iteration" in history[0]
     assert "best_score" in history[0]
     assert "population_size" in history[0]
+
+def test_mock_prediction_validation():
+    """Test mock prediction validation."""
+    def mock_metric(pred, example):
+        return 1.0 if pred.label == example.label else 0.0
+        
+    optimizer = FullyEvolutionaryPromptOptimizer(mock_metric, use_mock=True)
+    
+    # Test with invalid signature
+    with pytest.raises(ValueError):
+        optimizer._create_mock_prediction(None, {}, None)
+
+    # Test with empty input kwargs
+    signature = dspy.Signature("text -> label")
+    example = dspy.Example(text="Test", label="positive")
+    with pytest.raises(ValueError):
+        optimizer._create_mock_prediction(signature, {}, example)
+
+def test_parallel_execution_edge_cases():
+    """Test edge cases in parallel execution."""
+    def mock_metric(pred, example):
+        return 1.0 if pred.label == example.label else 0.0
+        
+    optimizer = FullyEvolutionaryPromptOptimizer(mock_metric, max_workers=2)
+    
+    # Test with empty examples
+    signature = dspy.Signature("text -> label")
+    program = dspy.Predict(signature)
+    with pytest.raises(ValueError):
+        optimizer._evaluate(program, Chromosome(), [])
+
+    # Test with invalid program
+    with pytest.raises(TypeError):
+        optimizer._evaluate(None, Chromosome(), [dspy.Example(text="test", label="test")])
+
+def test_prompt_validation():
+    """Test prompt validation logic."""
+    def mock_metric(pred, example):
+        return 1.0 if pred.label == example.label else 0.0
+        
+    optimizer = FullyEvolutionaryPromptOptimizer(mock_metric)
+    
+    # Test invalid prompt types
+    with pytest.raises(TypeError):
+        optimizer._ensure_placeholders(None)
+    with pytest.raises(TypeError):
+        optimizer._ensure_placeholders(123)
+
+    # Test missing placeholders
+    with pytest.raises(ValueError):
+        optimizer._ensure_placeholders("No placeholders here")
