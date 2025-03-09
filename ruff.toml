@@ -40,11 +40,10 @@ ignore = [
 ]
 
 # Per-file ignores
-per-file-ignores = [
-    { "glob" = "tests/*", "ignore" = ["D"] },  # Don't require docstrings in tests
-    { "glob" = "examples/*", "ignore" = ["D"] },  # Don't require docstrings in examples
-    { "glob" = "src/*", "ignore" = ["D"] }  # Don't require docstrings in source
-]
+[lint.per-file-ignores]
+"tests/*" = ["D"]  # Don't require docstrings in tests
+"examples/*" = ["D"]  # Don't require docstrings in examples
+"src/*" = ["D"]  # Don't require docstrings in source
 
 # Complexity settings
 [mccabe]
