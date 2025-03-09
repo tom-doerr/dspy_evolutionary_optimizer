@@ -84,21 +84,25 @@ class Chromosome:
         if not parts:
             return parts
             
-        # Split into instruction blocks
+        blocks = self._split_into_blocks(parts)
+        random.shuffle(blocks)
+        return self._flatten_blocks(blocks)
+        
+    def _split_into_blocks(self, parts):
+        """Split parts into instruction blocks"""
         blocks = []
         current_block = []
         for part in parts:
+            current_block.append(part)
             if part.endswith('.'):
-                current_block.append(part)
                 blocks.append(current_block)
                 current_block = []
-            else:
-                current_block.append(part)
-                
-        # Shuffle blocks
-        random.shuffle(blocks)
+        if current_block:
+            blocks.append(current_block)
+        return blocks
         
-        # Flatten back into parts
+    def _flatten_blocks(self, blocks):
+        """Flatten blocks back into parts list"""
         return [part for block in blocks for part in block]
         
     def to_prompt(self):
