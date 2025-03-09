@@ -55,7 +55,7 @@ def test_model_error_handling():
     # Test invalid model name
     with pytest.raises(ValueError):
         dspy.LM("invalid/model/name")
-    
+
     # Test connection timeout with more specific exception
     lm = dspy.LM("openrouter/google/gemini-2.0-flash-001")
     dspy.settings.configure(lm=lm, cache=False, timeout=0.001)
