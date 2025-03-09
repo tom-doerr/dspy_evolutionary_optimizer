@@ -1,0 +1,21 @@
+[MASTER]
+# Maximum number of lines in a module
+max-module-lines=500
+
+[MESSAGES CONTROL]
+# Maximum line length
+max-line-length=88
+
+[DESIGN]
+max-args=5
+max-locals=15
+max-statements=50
+max-branches=20
+max-returns=6
+max-attributes=10
+max-public-methods=20
+max-parents=7
+
+[BASIC]
+# Good variable names to ignore
+good-names=i,j,k,ex,Run,_,e,f,x,y,z
