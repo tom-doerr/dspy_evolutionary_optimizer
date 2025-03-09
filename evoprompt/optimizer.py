@@ -124,26 +124,23 @@ class FullyEvolutionaryPromptOptimizer:
                     crossed = self._crossover(chromosome["prompt"], random.choice(population)["prompt"])
                     new_population.append({"prompt": crossed, "score": None})
             
-            # Limit population size by keeping the best performers
-            if len(new_population) > self.max_population:
-                # Sort by score (highest first)
-                scored_population = [p for p in new_population if p["score"] is not None]
-                unscored_population = [p for p in new_population if p["score"] is None]
-                
-                # Sort scored chromosomes by score (descending)
-                scored_population.sort(key=lambda x: x["score"], reverse=True)
-                
-                # Keep the best scored chromosomes and some unscored ones up to max_population
-                remaining_slots = self.max_population - len(scored_population)
-                if remaining_slots > 0:
-                    # Keep some unscored chromosomes for diversity
-                    unscored_to_keep = min(remaining_slots, len(unscored_population))
-                    population = scored_population + unscored_population[:unscored_to_keep]
-                else:
-                    # If we have more scored chromosomes than max_population, keep only the best
-                    population = scored_population[:self.max_population]
-            else:
-                population = new_population
+            # Always keep evolving by removing worst performers
+            # First evaluate any unscored chromosomes
+            for chromosome in new_population:
+                if chromosome["score"] is None:
+                    chromosome["score"] = self._evaluate(program, chromosome["prompt"], trainset)
+            
+            # Sort entire population by score (best first)
+            new_population.sort(key=lambda x: x["score"], reverse=True)
+            
+            # Keep top performers but ensure some diversity
+            # Keep at least 25% of population as lower scoring variants
+            keep_count = min(len(new_population), self.max_population)
+            min_diverse = max(2, int(keep_count * 0.25))  # At least 2 and 25% of population
+            
+            # Keep best performers plus some diverse lower scoring ones
+            population = new_population[:keep_count - min_diverse] + \
+                        random.sample(new_population[keep_count - min_diverse:], min_diverse)
         
         # Make sure all chromosomes are evaluated before sorting
         for chromosome in population:
