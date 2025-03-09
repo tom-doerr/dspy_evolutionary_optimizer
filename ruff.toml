@@ -36,7 +36,7 @@ ignore = [
 
 [flake8-bandit]
 # Disable security checks since we're not doing crypto
-ignore = ["S311"]
+extend-ignore = ["S311"]
 
 [lint.per-file-ignores]
 "tests/*" = ["D"]  # Don't require docstrings in tests
