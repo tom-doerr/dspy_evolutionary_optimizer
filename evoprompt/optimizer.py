@@ -810,7 +810,7 @@ class FullyEvolutionaryPromptOptimizer:
         intensity = 1.0 - current_score  # More intense mutations for lower scores
         
         # Apply mutations based on intensity
-        num_mutations = max(1, min(3, int(3 * intensity))
+        num_mutations = max(1, min(3, int(3 * intensity)))
         mutations = [m for _, m in weighted_mutations]
         weights = [w for w, _ in weighted_mutations]
         
