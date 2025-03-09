@@ -68,7 +68,7 @@ def test_parallel_initialization(_metric_fixture: Callable[[Any, Any], float]) -
 
 
 def test_population_initialization(
-    _basic_optimizer_fixture: FullyEvolutionaryPromptOptimizer,
+    basic_optimizer_fixture: FullyEvolutionaryPromptOptimizer,
 ) -> None:
     # Access protected member for testing purposes
     # pylint: disable=protected-access

@@ -55,6 +55,12 @@ def test_model_error_handling():
     # Test invalid model name
     with pytest.raises(ValueError):
         dspy.LM("invalid/model/name")
+    
+    # Test connection timeout with more specific exception
+    lm = dspy.LM("openrouter/google/gemini-2.0-flash-001")
+    dspy.settings.configure(lm=lm, cache=False, timeout=0.001)
+    with pytest.raises(TimeoutError):
+        lm("Test message")
     # Test connection timeout
     lm = dspy.LM("openrouter/google/gemini-2.0-flash-001")
     dspy.settings.configure(lm=lm, cache=False, timeout=0.001)  # Set very low timeout
@@ -90,8 +96,8 @@ def test_model_error_handling():
 
 def test_predictor_error_handling():
     """Test error handling in DSPy Predict."""
-    # Test invalid signature
-    with pytest.raises(TypeError):
+    # Test invalid signature with more specific error message
+    with pytest.raises(TypeError, match="signature must be a dspy.Signature"):
         dspy.Predict(None)
     # Test invalid input
     signature = dspy.Signature("text -> response")
