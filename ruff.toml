@@ -1,5 +1,4 @@
 [tool.ruff]
-# Lint rules
 select = [
     "E",   # Pycodestyle errors
     "F",   # Pyflakes errors
