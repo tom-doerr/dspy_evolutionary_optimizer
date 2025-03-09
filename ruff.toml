@@ -55,10 +55,4 @@ lines_between_types = 1
 
 # Slightly more generous complexity limit
 [lint.mccabe]
-max-complexity = 10
-
-[format]
-quote-style = "double"
-indent-style = "space"
-line-length = 88
-skip-magic-trailing-comma = true
+max-complexity = 5
