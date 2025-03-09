@@ -25,9 +25,9 @@ select = [
 
 # Module size and complexity limits
 [lint.ruff]
-max-module-lines = 1000  # Maximum lines per module
-max-function-lines = 100  # Maximum lines per function
-max-class-lines = 300     # Maximum lines per class
+max-module-lines = 200  # Maximum lines per module
+max-function-lines = 20  # Maximum lines per function
+max-class-lines = 200     # Maximum lines per class
 
 # Keep existing ignores but add more reasonable ones
 ignore = [
