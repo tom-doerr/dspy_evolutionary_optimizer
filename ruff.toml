@@ -20,7 +20,13 @@ select = [
     
     # Complexity
     "C90", # McCabe complexity
+    "PLR", # pylint rules
 ]
+
+# Module size and complexity limits
+max-module-line-length = 1000  # Maximum lines per module
+max-function-line-length = 100  # Maximum lines per function
+max-class-line-length = 300     # Maximum lines per class
 
 # Keep existing ignores but add more reasonable ones
 ignore = [
@@ -32,12 +38,13 @@ ignore = [
     "W293",  # Blank line contains whitespace
     "D107",  # Missing docstring in __init__
     "S311",  # Standard pseudo-random generators are not suitable for cryptographic purposes
+    "PLR0913",  # Too many arguments
+    "PLR2004",  # Magic value used
 ]
 
-
-max-module-line-length = 200
 [lint.per-file-ignores]
 "tests/*" = ["D"]  # Don't require docstrings in tests
+"examples/*" = ["D"]  # Don't require docstrings in examples
 
 [lint.flake8-bugbear]
 extend-immutable-calls = ["frozenset", "tuple"]
@@ -50,6 +57,20 @@ order-by-type = false
 lines-after-imports = 2
 lines-between-types = 1
 
-# Slightly more generous complexity limit
+# Complexity limits
 [lint.mccabe]
-max-complexity = 5
+max-complexity = 5  # McCabe cyclomatic complexity
+
+[lint.pylint]
+max-args = 6        # Maximum number of function arguments
+max-locals = 15     # Maximum number of local variables
+max-statements = 50 # Maximum number of statements per function
+max-branches = 12   # Maximum number of branches per function
+max-returns = 6     # Maximum number of return statements
+max-attributes = 7  # Maximum number of class attributes
+
+[lint.ruff]
+# Enable additional Ruff-specific rules
+allow-star-arg-unpacking = false
+check-builtin-shadowing = true
+check-typed-exception = true
