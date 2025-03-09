@@ -171,10 +171,6 @@ class FullyEvolutionaryPromptOptimizer:
                     # Extract input fields from the example
                     input_kwargs = {k: ex[k] for k in program.signature.input_fields}
                     
-                    # Add a timestamp to force unique inputs that bypass any internal caching
-                    # This is just for debugging - doesn't affect the actual prediction
-                    debug_key = f"_timestamp_{time.time()}"
-                    
                     # Time the prediction
                     start_time = time.time()
                     
