@@ -8,6 +8,12 @@ setup(
         "dspy-ai",
         "matplotlib",
     ],
+    extras_require={
+        "test": [
+            "pytest",
+            "pytest-timeout",
+        ],
+    },
     author="Your Name",
     author_email="your.email@example.com",
     description="A package for evolving prompts with numeric feedback",
