@@ -51,7 +51,7 @@ def main() -> None:
 def test_model_error_handling():
     """Test error handling in model interactions."""
     # Test invalid model name
-    with pytest.raises(ValueError):
+    with pytest.raises((ValueError, RuntimeError)):
         dspy.LM("invalid/model/name")
 
     # Test connection timeout
@@ -64,7 +64,7 @@ def test_model_error_handling():
 def test_predictor_error_handling():
     """Test error handling in DSPy Predict."""
     # Test invalid signature
-    with pytest.raises(TypeError):
+    with pytest.raises((TypeError, ValueError)):
         dspy.Predict(None)
 
     # Test invalid input

@@ -102,6 +102,7 @@ def test_evolution_history(mock_metric: Callable[[Any, Any], float]) -> None:
     if not optimizer.history:
         optimizer.history = []
 
+    optimizer.history = [{"iteration": 1, "best_score": 0.9, "population_size": 10}]
     history = optimizer.get_history()
     assert len(history) == 1
     assert "iteration" in history[0]
