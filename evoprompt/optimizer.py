@@ -215,8 +215,15 @@ class FullyEvolutionaryPromptOptimizer:
         console.print()
 
     def _initialize_population(self):
-        """Initialize the starting population."""
-        return [{"prompt": "{{input}} {{output}}", "score": None, "last_used": 0}]
+        """Initialize the starting population with chromosomes."""
+        base_task = ["Given {{input}},", "generate {{output}}"]
+        base_mutation = ["Be concise.", "Be accurate."]
+        
+        return [{
+            "chromosome": Chromosome(base_task, base_mutation),
+            "score": None,
+            "last_used": 0
+        }]
 
     def _process_population(self, population, iteration, recent_scores, program, trainset):
         """Process one iteration of population evolution."""
@@ -282,9 +289,14 @@ class FullyEvolutionaryPromptOptimizer:
             population.append({"prompt": new_prompt, "score": None, "last_used": iteration})
 
     def _apply_mutation(self, population, selected, iteration):
-        """Apply mutation to a selected prompt."""
-        mutated = self._mutate(selected["prompt"])
-        population.append({"prompt": mutated, "score": None, "last_used": iteration})
+        """Apply mutation to a selected chromosome."""
+        new_chromosome = copy.deepcopy(selected["chromosome"])
+        new_chromosome.mutate(self.mutation_rate)
+        population.append({
+            "chromosome": new_chromosome,
+            "score": None,
+            "last_used": iteration
+        })
 
     def _initialize_evolution(self):
         """Initialize evolution parameters and population."""
@@ -365,7 +377,7 @@ class FullyEvolutionaryPromptOptimizer:
         return population, recent_scores
 
     def _mate_high_performers(self, population, selected, top_20_percentile, iteration):
-        """Mate high performing prompts."""
+        """Mate high performing chromosomes."""
         high_performers = [p for p in population
                          if p["score"] is not None
                          and p["score"] >= top_20_percentile
@@ -373,8 +385,12 @@ class FullyEvolutionaryPromptOptimizer:
 
         if high_performers:
             mate = random.choice(high_performers)
-            new_prompt = self._crossover(selected["prompt"], mate["prompt"])
-            population.append({"prompt": new_prompt, "score": None, "last_used": iteration})
+            new_chromosome = selected["chromosome"].combine(mate["chromosome"])
+            population.append({
+                "chromosome": new_chromosome,
+                "score": None,
+                "last_used": iteration
+            })
 
     def _apply_mutation(self, population, selected, iteration):
         """Apply mutation to a selected prompt."""
