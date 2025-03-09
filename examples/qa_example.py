@@ -1,8 +1,8 @@
-"""
-Example of using the FullyEvolutionaryPromptOptimizer for a question answering task.
+"""Example of using the FullyEvolutionaryPromptOptimizer for a question answering task.
 """
 
 import dspy
+
 from evoprompt import FullyEvolutionaryPromptOptimizer
 from evoprompt.visualization import plot_evolution_history
 
@@ -29,13 +29,13 @@ def main():
     
     # Create a small training set
     qa_trainset = [
-        dspy.Example(question="What's the capital?", context="France is a country in Western Europe.", 
+        dspy.Example(question="What's the capital?", context="France is a country in Western Europe.",
                     answer="Paris"),
-        dspy.Example(question="Where's the president?", context="The USA has its government in Washington DC.", 
+        dspy.Example(question="Where's the president?", context="The USA has its government in Washington DC.",
                     answer="Washington DC"),
-        dspy.Example(question="What's the largest city?", context="Japan is an island nation with Tokyo as its largest city.", 
+        dspy.Example(question="What's the largest city?", context="Japan is an island nation with Tokyo as its largest city.",
                     answer="Tokyo"),
-        dspy.Example(question="What's the main language?", context="Brazil is the largest country in South America where Portuguese is spoken.", 
+        dspy.Example(question="What's the main language?", context="Brazil is the largest country in South America where Portuguese is spoken.",
                     answer="Portuguese"),
     ]
     
