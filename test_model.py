@@ -31,7 +31,7 @@ def main() -> None:
     
     # Define a simple signature
     signature = dspy.Signature("message -> response")
-    signature.docstring = "Given a message, generate a response"
+    signature.__doc__ = "Given a message, generate a response"
     
     # Create a predictor
     predictor = dspy.Predict(signature)
@@ -67,7 +67,7 @@ def test_predictor_error_handling():
 
     # Test invalid input
     signature = dspy.Signature("text -> response")
-    signature.docstring = "Given text, generate a response"
+    signature.__doc__ = "Given text, generate a response"
     predictor = dspy.Predict(signature)
     with pytest.raises(TypeError):
         predictor(None)
