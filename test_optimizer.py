@@ -56,6 +56,34 @@ class TestFullyEvolutionaryPromptOptimizer:
         assert hasattr(optimized_program, 'signature')
         assert hasattr(optimized_program, 'predict')
 
+    @pytest.mark.integration
+    def test_real_api_call(self):
+        """Test a single real API call to verify connectivity."""
+        # Use a minimal configuration
+        lm = dspy.LM('openrouter/google/gemini-2.0-flash-001', cache=False)
+        dspy.configure(lm=lm)
+        
+        # Create a simple program
+        program = dspy.Predict(dspy.Signature("input -> output"))
+        
+        # Create optimizer with minimal settings
+        optimizer = FullyEvolutionaryPromptOptimizer(
+            metric=lambda pred, ex: 1.0,  # Simple metric
+            generations=1,  # Only 1 generation
+            max_inference_calls=1,  # Only 1 call
+            use_mock=False
+        )
+        
+        # Minimal trainset
+        trainset = [dspy.Example(input="test", output="result")]
+        
+        # Run optimization
+        result = optimizer.compile(program, trainset)
+        
+        # Basic validation
+        assert result is not None
+        assert hasattr(result, 'signature')
+
     def test_population_management(self, simple_program, simple_trainset, mock_metric):
         """Test population management and evolution."""
         # Configure mock LM
