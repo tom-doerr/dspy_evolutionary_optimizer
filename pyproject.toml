@@ -7,11 +7,11 @@ dependencies = [
     "pylint>=3.0.0"
 ]
 
-[tool.pylint.messages_control]
+[tool.pylint."messages_control"]
 max-module-lines = 500
 max-line-length = 88
 
-[tool.pylint.design]
+[tool.pylint."design"]
 max-args = 5
 max-locals = 15
 max-statements = 50
@@ -20,9 +20,8 @@ max-returns = 6
 max-attributes = 10
 max-public-methods = 20
 max-parents = 7
-max-branches = 20
 
-[tool.pylint.basic]
+[tool.pylint."basic"]
 good-names = [
     "i",
     "j",
