@@ -1,7 +1,7 @@
 """Simple test script to verify that the language model is working."""
 
 import time
-
+import pytest
 import dspy
 
 
@@ -23,7 +23,7 @@ def main() -> None:
         elapsed = time.time() - start_time
         print(f"Call successful! Took {elapsed:.2f} seconds")
         print(f"Response: {response}")
-    except Exception as e:
+    except (dspy.error.LMError, ConnectionError) as e:
         print(f"Error calling model: {e}")
     
     # Test with DSPy Predict
@@ -43,7 +43,7 @@ def main() -> None:
         elapsed = time.time() - start_time
         print(f"Prediction successful! Took {elapsed:.2f} seconds")
         print(f"Result: {result.response}")
-    except Exception as e:
+    except (dspy.error.PredictError, ConnectionError) as e:
         print(f"Error making prediction: {e}")
 
 def test_model_error_handling():
