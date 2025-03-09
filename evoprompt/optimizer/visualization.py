@@ -25,9 +25,7 @@ class EvolutionVisualizer:
                 print(f"Error creating progress bar: {e}")
             return f"[Progress: {inference_count}/{max_inference_calls}]"
 
-    def _create_main_panel(self, iteration: int, best_score: float, 
-                         avg_score: float, population_size: int,
-                         inference_count: int, max_inference_calls: int) -> Table:
+    def _create_main_panel(self, stats: Dict[str, Any]) -> Table:
         """Create main stats panel."""
         panel = Table.grid(padding=(1, 2))
         panel.add_column(justify="left", style="cyan")
@@ -57,13 +55,19 @@ class EvolutionVisualizer:
             )
         return table
 
-    def log_progress(self, *, iteration: int, population: List[Dict[str, Any]],
-                    inference_count: int, max_inference_calls: int,
-                    history: List[Dict[str, Any]], best_prompt: str) -> None:
+    def log_progress(self, *, stats: Dict[str, Any], 
+                    history: List[Dict[str, Any]]) -> None:
         """Log and display progress information."""
-        best_score, avg_score, _ = self._get_population_stats(population)
-        if best_score is None:
+        if stats["best_score"] is None:
             return
+            
+        best_score = stats["best_score"]
+        avg_score = stats["avg_score"]
+        population_size = stats["population_size"]
+        inference_count = stats["inference_count"]
+        max_inference_calls = stats["max_inference_calls"]
+        iteration = stats["iteration"]
+        best_prompt = stats["best_prompt"]
             
         progress = self._create_progress_bar(inference_count, max_inference_calls)
         main_panel = self._create_main_panel(iteration, best_score, avg_score,

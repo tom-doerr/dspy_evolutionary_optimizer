@@ -6,15 +6,23 @@ from typing import List, Dict, Any, Callable
 import random
 
 @dataclass
-class OptimizerConfig:
-    metric: Callable
+class EvolutionParams:
     generations: int = 10
     mutation_rate: float = 0.5
     growth_rate: float = 0.3
     max_population: int = 100
+
+@dataclass
+class RuntimeParams:
     max_workers: int = 1
     debug: bool = False
     max_inference_calls: int = 100
+
+@dataclass
+class OptimizerConfig:
+    metric: Callable
+    evolution: EvolutionParams = EvolutionParams()
+    runtime: RuntimeParams = RuntimeParams()
 
 @dataclass 
 class OptimizerState:
