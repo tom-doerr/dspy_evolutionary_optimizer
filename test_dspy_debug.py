@@ -3,7 +3,6 @@ Debug script to investigate DSPy module structure
 """
 
 import sys
-import importlib
 import inspect
 import os
 
@@ -13,7 +12,7 @@ def main():
     # Try to import dspy
     try:
         import dspy
-        print(f"DSPy imported successfully")
+        print("DSPy imported successfully")
         print(f"DSPy version: {getattr(dspy, '__version__', 'unknown')}")
         print(f"DSPy module location: {inspect.getfile(dspy)}")
         
@@ -52,7 +51,7 @@ def main():
                 dspy_locations.append(potential_dspy)
         
         if len(dspy_locations) > 1:
-            print(f"WARNING: Multiple DSPy installations found:")
+            print("WARNING: Multiple DSPy installations found:")
             for loc in dspy_locations:
                 print(f"  {loc}")
         elif dspy_locations:
@@ -73,7 +72,7 @@ def main():
                     module = getattr(dspy, module_name)
                     if hasattr(module, 'LM'):
                         print(f"  Found LM in dspy.{module_name}")
-                except Exception as e:
+                except Exception:
                     pass
     except:
         pass
