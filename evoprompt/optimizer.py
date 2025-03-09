@@ -63,6 +63,10 @@ class FullyEvolutionaryPromptOptimizer:
         if not scored_population:
             return random.choice(population)  # noqa: S311
         
+        return self._select_using_pareto(scored_population)
+
+    def _select_using_pareto(self, scored_population):
+        """Select a prompt using Pareto distribution weights."""
         # Sort population by score descending
         scored_population.sort(key=lambda x: x["score"], reverse=True)
         
@@ -291,6 +295,10 @@ class FullyEvolutionaryPromptOptimizer:
         if not scored_population:
             return random.choice(population)  # noqa: S311
         
+        return self._select_using_normalized_scores(scored_population)
+
+    def _select_using_normalized_scores(self, scored_population):
+        """Select a prompt using normalized score weights."""
         scores = [p["score"] for p in scored_population]
         min_score = min(scores)
         max_score = max(scores)
