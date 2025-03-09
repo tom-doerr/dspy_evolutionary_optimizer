@@ -123,6 +123,98 @@ class TestFullyEvolutionaryPromptOptimizer:
         assert all('iteration' in entry for entry in history)
         assert all('best_score' in entry for entry in history)
 
+    def test_pareto_selection(self, mock_metric):
+        """Test Pareto distribution selection favors top performers."""
+        optimizer = FullyEvolutionaryPromptOptimizer(mock_metric)
+        
+        # Create test population with varied scores
+        population = [
+            {"prompt": "prompt1", "score": 0.9, "last_used": 1},
+            {"prompt": "prompt2", "score": 0.8, "last_used": 2},
+            {"prompt": "prompt3", "score": 0.7, "last_used": 3},
+            {"prompt": "prompt4", "score": 0.6, "last_used": 4},
+            {"prompt": "prompt5", "score": 0.5, "last_used": 5},
+        ]
+        
+        # Run selection 100 times and count selections
+        selections = {p["prompt"]: 0 for p in population}
+        for _ in range(100):
+            selected = optimizer._select_prompt(population)
+            selections[selected["prompt"]] += 1
+            
+        # Top performer should be selected much more often
+        assert selections["prompt1"] > selections["prompt5"] * 2
+
+    def test_crossover_operations(self, mock_metric):
+        """Test crossover produces valid combinations."""
+        optimizer = FullyEvolutionaryPromptOptimizer(mock_metric)
+        
+        parent1 = "This is the first prompt"
+        parent2 = "Another different prompt here"
+        
+        # Test multiple crossovers
+        for _ in range(10):
+            child = optimizer._crossover(parent1, parent2)
+            assert isinstance(child, str)
+            assert len(child.split()) >= min(len(parent1.split()), len(parent2.split()))
+            assert any(word in child for word in parent1.split())
+            assert any(word in child for word in parent2.split())
+
+    def test_mutation_operations(self, mock_metric):
+        """Test mutation produces valid variations."""
+        optimizer = FullyEvolutionaryPromptOptimizer(mock_metric)
+        
+        original = "This is a test prompt"
+        
+        # Test multiple mutations
+        for _ in range(10):
+            mutated = optimizer._mutate(original)
+            assert isinstance(mutated, str)
+            assert len(mutated) >= len(original)
+            assert "{{input}}" in mutated
+            assert "{{output}}" in mutated
+
+    def test_mock_predictions(self, simple_program, mock_metric):
+        """Test mock prediction generation."""
+        optimizer = FullyEvolutionaryPromptOptimizer(mock_metric, use_mock=True)
+        
+        example = dspy.Example(input="test", output="result")
+        prediction = optimizer._create_mock_prediction(
+            simple_program.signature,
+            {"input": "test"},
+            example
+        )
+        
+        assert hasattr(prediction, 'output')
+        assert prediction.output == "result"
+
+    def test_population_limits(self, mock_metric):
+        """Test population size enforcement."""
+        optimizer = FullyEvolutionaryPromptOptimizer(mock_metric, max_population=3)
+        
+        population = [
+            {"prompt": "p1", "score": 0.9, "last_used": 1},
+            {"prompt": "p2", "score": 0.8, "last_used": 2},
+            {"prompt": "p3", "score": 0.7, "last_used": 3},
+            {"prompt": "p4", "score": 0.6, "last_used": 4},
+        ]
+        
+        updated = optimizer._update_population(population, iteration=5, recent_scores=[0.9, 0.8])
+        assert len(updated) == 3
+        assert all(p["score"] is not None for p in updated)
+
+    def test_error_handling(self, simple_program, simple_trainset, mock_metric):
+        """Test error handling during evaluation."""
+        # Create optimizer with mock that will fail
+        optimizer = FullyEvolutionaryPromptOptimizer(
+            lambda pred, ex: 1/0,  # Will raise ZeroDivisionError
+            use_mock=True
+        )
+        
+        # Should handle errors gracefully
+        score = optimizer._evaluate(simple_program, "test prompt", simple_trainset)
+        assert score == 0.0
+
     def test_crossover(self, mock_metric):
         """Test crossover functionality."""
         optimizer = FullyEvolutionaryPromptOptimizer(mock_metric)
