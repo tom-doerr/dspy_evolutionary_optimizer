@@ -34,10 +34,8 @@ ignore = [
     "S311",  # Standard pseudo-random generators are not suitable for cryptographic purposes
 ]
 
-[flake8-bandit]
-# Disable security checks since we're not doing crypto
-extend-ignore = ["S311"]
 
+max-module-line-length = 200
 [lint.per-file-ignores]
 "tests/*" = ["D"]  # Don't require docstrings in tests
 
