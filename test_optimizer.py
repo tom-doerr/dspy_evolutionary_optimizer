@@ -49,7 +49,7 @@ def test_optimizer_initialization(mock_metric: Callable[[Any, Any], float]) -> N
     )
 
     # Verify configuration
-    assert optimizer.config.metric == _mock_metric
+    assert optimizer.config.metric == mock_metric
     assert optimizer.config.generations == 5
     assert optimizer.config.mutation_rate == 0.5
     assert optimizer.config.growth_rate == 0.3
