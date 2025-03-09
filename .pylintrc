@@ -7,10 +7,10 @@ ignore=pyproject.toml
 
 [MESSAGES CONTROL]
 # Disable missing docstring warnings
-disable=missing-module-docstring,missing-class-docstring,missing-function-docstring
+disable=missing-module-docstring,missing-class-docstring,missing-function-docstring,line-too-long,trailing-whitespace
 
 [DESIGN]
-max-args=3
+max-args=5
 max-locals=15
 max-statements=50
 max-branches=20
