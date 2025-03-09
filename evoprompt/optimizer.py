@@ -180,6 +180,59 @@ class FullyEvolutionaryPromptOptimizer:
         # Add some spacing
         console.print()
 
+    def _initialize_population(self):
+        """Initialize the starting population."""
+        return [{"prompt": "{{input}} {{output}}", "score": None, "last_used": 0}]
+
+    def _process_population(self, population, iteration, recent_scores, program, trainset):
+        """Process one iteration of population evolution."""
+        # Select a prompt probabilistically based on score
+        selected = self._select_prompt(population)
+        
+        # Evaluate the selected prompt on a random example
+        example = random.choice(trainset)
+        selected["score"] = self._evaluate(program, selected["prompt"], [example])
+        selected["last_used"] = iteration
+        recent_scores.append(selected["score"])
+
+        # Keep recent scores window (last 20 scores)
+        if len(recent_scores) > 20:
+            recent_scores.pop(0)
+
+        # Calculate recent score thresholds
+        if recent_scores:
+            recent_scores_sorted = sorted(recent_scores)
+            top_20_percentile = recent_scores_sorted[int(len(recent_scores_sorted) * 0.8)]
+        else:
+            top_20_percentile = 0
+
+        # If this score is in top 20%, mate it with another high performer
+        if selected["score"] >= top_20_percentile:
+            self._mate_high_performers(population, selected, top_20_percentile, iteration)
+
+        # Apply mutation to selected prompt
+        if random.random() < self.mutation_rate:
+            self._apply_mutation(population, selected, iteration)
+
+        return population, recent_scores
+
+    def _mate_high_performers(self, population, selected, top_20_percentile, iteration):
+        """Mate high performing prompts."""
+        high_performers = [p for p in population
+                         if p["score"] is not None
+                         and p["score"] >= top_20_percentile
+                         and p != selected]
+
+        if high_performers:
+            mate = random.choice(high_performers)
+            new_prompt = self._crossover(selected["prompt"], mate["prompt"])
+            population.append({"prompt": new_prompt, "score": None, "last_used": iteration})
+
+    def _apply_mutation(self, population, selected, iteration):
+        """Apply mutation to a selected prompt."""
+        mutated = self._mutate(selected["prompt"])
+        population.append({"prompt": mutated, "score": None, "last_used": iteration})
+
     def compile(self, program, trainset):
         """
         Evolve prompts using continuous probabilistic selection and mating.
@@ -424,6 +477,50 @@ class FullyEvolutionaryPromptOptimizer:
 
     def _evaluate_predictions(self, predictions, trainset):
         """Calculate average score for predictions."""
+        if not predictions:
+            return 0.0
+
+        scores = []
+        for pred, ex in zip(predictions, trainset):
+            try:
+                score = self.metric(pred, ex)
+                scores.append(score)
+            except Exception as e:
+                print(f"Error in metric calculation: {e}")
+                scores.append(0.0)
+
+        return sum(scores) / len(scores) if scores else 0.0
+
+    def _make_predictions(self, program, prompt, trainset):
+        """Make predictions for all training examples."""
+        predictions = []
+        predictor = dspy.Predict(program.signature, prompt=prompt)
+        
+        for ex in trainset:
+            try:
+                input_kwargs = {k: ex[k] for k in program.signature.input_fields}
+                
+                if self.use_mock:
+                    pred = self._create_mock_prediction(program.signature, input_kwargs, ex)
+                    time.sleep(0.1)  # Simulate API latency
+                else:
+                    if self.max_inference_calls > 0 and self.inference_count >= self.max_inference_calls:
+                        if self.debug:
+                            print("  Inference call limit reached, using mock prediction")
+                        pred = self._create_mock_prediction(program.signature, input_kwargs, ex)
+                    else:
+                        pred = predictor(**input_kwargs)
+                        self.inference_count += 1
+
+                predictions.append(pred)
+            except Exception as e:
+                print(f"Error during prediction: {e}")
+                return None
+
+        return predictions
+
+    def _calculate_evaluation_scores(self, predictions, trainset):
+        """Calculate scores for all predictions."""
         if not predictions:
             return 0.0
 
