@@ -2,7 +2,12 @@
 # Maximum number of lines in a module
 max-module-lines=200
 
+# Files to ignore
+ignore=pyproject.toml
+
 [MESSAGES CONTROL]
+# Disable missing docstring warnings
+disable=missing-module-docstring,missing-class-docstring,missing-function-docstring
 
 [DESIGN]
 max-args=5
