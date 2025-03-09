@@ -540,6 +540,44 @@ class FullyEvolutionaryPromptOptimizer:
 
         return sum(scores) / len(scores) if scores else 0.0
 
+    def _make_prediction(self, predictor, input_kwargs, ex):
+        """Make a single prediction, handling mock mode and inference limits."""
+        if self.use_mock:
+            pred = self._create_mock_prediction(predictor.signature, input_kwargs, ex)
+            time.sleep(0.1)  # Simulate API latency
+            return pred
+
+        if self.max_inference_calls > 0 and self.inference_count >= self.max_inference_calls:
+            if self.debug:
+                print("  Inference call limit reached, using mock prediction")
+            return self._create_mock_prediction(predictor.signature, input_kwargs, ex)
+
+        pred = predictor(**input_kwargs)
+        self.inference_count += 1
+        return pred
+
+    def _log_prediction_debug(self, input_kwargs, pred, elapsed):
+        """Log prediction debug information if enabled."""
+        if not self.debug:
+            return
+            
+        print(f"  Prediction for '{input_kwargs}' took {elapsed:.4f}s")
+        if elapsed < 0.05 and not self.use_mock:
+            print("  WARNING: Prediction was extremely fast - likely not calling LLM")
+        print(f"  Prediction result: {pred}")
+
+    def _calculate_scores(self, predictions, trainset):
+        """Calculate scores for predictions against training examples."""
+        scores = []
+        for pred, ex in zip(predictions, trainset):
+            try:
+                score = self.metric(pred, ex)
+                scores.append(score)
+            except Exception as e:
+                print(f"Error in metric calculation: {e}")
+                scores.append(0.0)
+        return scores
+
     def _evaluate(self, program, prompt, trainset):
         """
         Evaluate a prompt's performance on the training set.
@@ -553,7 +591,6 @@ class FullyEvolutionaryPromptOptimizer:
             Average score across all examples
         """
         try:
-            # Create a predictor with the prompt template
             predictor = dspy.Predict(program.signature, prompt=prompt)
             predictions = []
 
@@ -562,64 +599,30 @@ class FullyEvolutionaryPromptOptimizer:
 
             for ex in trainset:
                 try:
-                    # Extract input fields from the example
                     input_kwargs = {k: ex[k] for k in program.signature.input_fields}
-
-                    # Time the prediction
                     start_time = time.time()
 
-                    # We can't directly access the compiled prompt in newer DSPy versions
-                    # Just log the inputs instead
                     if self.debug and len(predictions) == 0:
                         print(f"  Input: {input_kwargs}")
 
-                    # Make the prediction (or use mock response in mock mode)
-                    if self.use_mock:
-                        # Create a mock prediction that will pass the metric
-                        # This simulates what the model would return
-                        pred = self._create_mock_prediction(program.signature, input_kwargs, ex)
-                        time.sleep(0.1)  # Simulate API latency
-                    else:
-                        # Make a real prediction if we haven't hit the limit
-                        if self.max_inference_calls > 0 and self.inference_count >= self.max_inference_calls:
-                            if self.debug:
-                                print("  Inference call limit reached, using mock prediction")
-                            pred = self._create_mock_prediction(program.signature, input_kwargs, ex)
-                        else:
-                            pred = predictor(**input_kwargs)
-                            self.inference_count += 1
-
+                    pred = self._make_prediction(predictor, input_kwargs, ex)
                     elapsed = time.time() - start_time
-                    self.inference_count += 1
-
-                    if self.debug:
-                        print(f"  Prediction for '{input_kwargs}' took {elapsed:.4f}s")
-                        if elapsed < 0.05 and not self.use_mock:
-                            print("  WARNING: Prediction was extremely fast - likely not calling LLM")
-                        print(f"  Prediction result: {pred}")
-
+                    
+                    self._log_prediction_debug(input_kwargs, pred, elapsed)
                     predictions.append(pred)
                 except Exception as e:
                     print(f"Error during prediction: {e}")
-                    return 0.0  # Return low score for failed predictions
+                    return 0.0
 
             if not predictions:
                 return 0.0
 
-            scores = []
-            for pred, ex in zip(predictions, trainset):
-                try:
-                    score = self.metric(pred, ex)
-                    scores.append(score)
-                except Exception as e:
-                    print(f"Error in metric calculation: {e}")
-                    scores.append(0.0)
-
+            scores = self._calculate_scores(predictions, trainset)
             return sum(scores) / len(scores) if scores else 0.0
 
         except Exception as e:
             print(f"Evaluation error: {e}")
-            return 0.0  # Return low score for failed evaluations
+            return 0.0
 
     def _crossover(self, prompt1: str, prompt2: str) -> str:
         """
