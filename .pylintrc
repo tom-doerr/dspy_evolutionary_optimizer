@@ -24,3 +24,7 @@ max-complexity=5
 min-public-methods=1
 min-similarity-lines=4
 
+# Maintainability Index settings
+min-mi-score=80  # 80-100 = highly maintainable
+mi-threshold=50  # Below 50 = needs refactoring
+
