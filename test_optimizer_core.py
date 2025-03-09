@@ -108,8 +108,12 @@ def test_evolution_history(_mock_metric: Callable[[Any, Any], float]) -> None:
     optimizer.history = [{"iteration": 1, "best_score": 0.9, "population_size": 10}]
     optimizer.history = [{"iteration": 1, "best_score": 0.9, "population_size": 10}]
     optimizer.history = [{"iteration": 1, "best_score": 0.9, "population_size": 10}]
+    optimizer.history = [{"iteration": 1, "best_score": 0.9, "population_size": 10}]
     history = optimizer.get_history()
     assert len(history) == 1
+    assert "iteration" in history[0]
+    assert "best_score" in history[0]
+    assert "population_size" in history[0]
     assert "iteration" in history[0]
     assert "best_score" in history[0]
     assert "population_size" in history[0]
