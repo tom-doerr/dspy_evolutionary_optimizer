@@ -867,7 +867,7 @@ class FullyEvolutionaryPromptOptimizer:
                 output_values[field] = getattr(example, field)
             else:
                 # Generate context-aware mock response
-                input_text = next(iter(input_kwargs.values()), ""
+                input_text = next(iter(input_kwargs.values()), "")
                 output_values[field] = self._generate_mock_response(field, input_text)
                 
         return MockPrediction(**output_values)
