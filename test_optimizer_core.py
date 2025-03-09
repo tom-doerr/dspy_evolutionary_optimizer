@@ -4,7 +4,13 @@ import pytest
 import dspy
 
 from evoprompt.chromosome import Chromosome
-from evoprompt.optimizer import FullyEvolutionaryPromptOptimizer
+from evoprompt import FullyEvolutionaryPromptOptimizer
+
+@pytest.fixture
+def optimizer():
+    def mock_metric(pred, example):
+        return 1.0 if pred.label == example.label else 0.0
+    return FullyEvolutionaryPromptOptimizer(mock_metric)
 
 
 def test_optimizer_initialization():
@@ -30,7 +36,7 @@ def test_population_initialization():
     def mock_metric(pred, example):
         return 1.0 if pred.label == example.label else 0.0
         
-    optimizer = FullyEvolutionaryPromptOptimizer(mock_metric)
+    optimizer = optimizer()
     population = optimizer._initialize_population()  # pylint: disable=protected-access
     
     assert len(population) == 1
@@ -111,10 +117,11 @@ def test_parallel_evaluation():
     def mock_metric(pred, example):
         return 1.0 if pred.label == example.label else 0.0
         
-    optimizer = FullyEvolutionaryPromptOptimizer(mock_metric, max_workers=2)
+    optimizer = optimizer(max_workers=2)
     
     # Create mock program and examples
-    signature = dspy.Signature("text -> label", "Given text, generate a label")
+    signature = dspy.Signature("text -> label")
+    signature.__doc__ = "Given text, generate a label"
     program = dspy.Predict(signature)
     
     examples = [
@@ -131,7 +138,7 @@ def test_mock_prediction():
     def mock_metric(pred, example):
         return 1.0 if pred.label == example.label else 0.0
         
-    optimizer = FullyEvolutionaryPromptOptimizer(mock_metric, use_mock=True)
+    optimizer = optimizer(use_mock=True)
     
     signature = dspy.Signature("text -> label", "Given text, generate a label")
     example = dspy.Example(text="Great product!", label="positive")
@@ -179,7 +186,7 @@ def test_parallel_execution_edge_cases():
     def mock_metric(pred, example):
         return 1.0 if pred.label == example.label else 0.0
         
-    optimizer = FullyEvolutionaryPromptOptimizer(mock_metric, max_workers=2)
+    optimizer = optimizer(max_workers=2)
     
     # Test with empty examples
     signature = dspy.Signature("text -> label")
