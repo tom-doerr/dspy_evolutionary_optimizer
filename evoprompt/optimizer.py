@@ -107,27 +107,49 @@ class FullyEvolutionaryPromptOptimizer:
         if self.use_mock and self.debug:
             print("MOCK MODE ENABLED: Using simulated responses instead of real LLM calls")
 
-    def _select_prompt(self, population):
-        """Select a prompt using Pareto distribution to favor top performers."""
+    def _select_prompt(self, population: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Select a prompt using Pareto distribution to favor top performers.
+        
+        Args:
+            population: List of prompt dictionaries with scores
+            
+        Returns:
+            Selected prompt dictionary
+            
+        Raises:
+            ValueError: If population is empty
+        """
+        if not population:
+            raise ValueError("Cannot select from empty population")
+            
         scored_population = [p for p in population if p["score"] is not None]
         if not scored_population:
             return random.choice(population)
         
         return self._select_using_pareto(scored_population)
 
-    def _select_using_pareto(self, scored_population):
-        """Select a prompt using Pareto distribution weights."""
+    def _select_using_pareto(self, scored_population: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Select a prompt using Pareto distribution weights.
+        
+        Args:
+            scored_population: List of scored prompt dictionaries
+            
+        Returns:
+            Selected prompt dictionary
+            
+        Raises:
+            ValueError: If scored_population is empty
+        """
+        if not scored_population:
+            raise ValueError("Cannot select from empty scored population")
+            
         # Sort population by score descending
         scored_population.sort(key=lambda x: x["score"], reverse=True)
         
         # Calculate Pareto weights (80/20 rule)
-        weights = []
         alpha = 1.16  # Pareto shape parameter (80/20 rule)
         n = len(scored_population)
-        for i in range(n):
-            # Weight decreases exponentially based on rank
-            weight = (n - i) ** (-alpha)
-            weights.append(weight)
+        weights = [(n - i) ** (-alpha) for i in range(n)]
             
         # Normalize weights
         total = sum(weights)
@@ -136,16 +158,30 @@ class FullyEvolutionaryPromptOptimizer:
         # Select using weighted probabilities
         return random.choices(scored_population, weights=probs, k=1)[0]
 
-    def _update_population(self, population, iteration, recent_scores):
-        """Update population based on scores and iteration."""
+    def _update_population(self, 
+                         population: List[Dict[str, Any]],
+                         iteration: int,
+                         recent_scores: List[float]]) -> List[Dict[str, Any]]:
+        """Update population based on scores and iteration.
+        
+        Args:
+            population: Current population of prompts
+            iteration: Current generation number
+            recent_scores: List of recent evaluation scores
+            
+        Returns:
+            Updated population after applying size limits and removing stale prompts
+        """
+        # Calculate recent score thresholds if scores exist
         if recent_scores:
             recent_scores_sorted = sorted(recent_scores)
             _ = recent_scores_sorted[int(len(recent_scores_sorted) * 0.8)]  # Calculate but don't use percentile
             
-        # Remove stale prompts
-        population = [p for p in population
-                     if iteration - p["last_used"] < 10
-                     or p["score"] is None]
+        # Remove stale prompts (unused for 10+ iterations)
+        population = [
+            p for p in population
+            if iteration - p["last_used"] < 10 or p["score"] is None
+        ]
         
         # Enforce population size limit
         if len(population) > self.max_population:
@@ -156,15 +192,29 @@ class FullyEvolutionaryPromptOptimizer:
                 
         return population
 
-    def _get_population_stats(self, population):
-        """Calculate population statistics."""
+    def _get_population_stats(self, population: List[Dict[str, Any]]) -> Tuple[Optional[float], Optional[float], Optional[str]]:
+        """Calculate population statistics.
+        
+        Args:
+            population: List of prompt dictionaries with scores
+            
+        Returns:
+            Tuple containing:
+                - Best score (float or None if no scores)
+                - Average score (float or None if no scores)
+                - Best prompt (str or None if no scores)
+        """
         scores = [p["score"] for p in population if p["score"] is not None]
         if not scores:
             return None, None, None
             
         best_score = max(scores)
         avg_score = mean(scores)
-        best_prompt = max(population, key=lambda x: x["score"] if x["score"] is not None else -float('inf'))["prompt"]
+        best_prompt = max(
+            population, 
+            key=lambda x: x["score"] if x["score"] is not None else -float('inf')
+        )["prompt"]
+        
         return best_score, avg_score, best_prompt
 
     def _create_progress_bar(self):
