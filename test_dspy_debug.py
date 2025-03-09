@@ -3,8 +3,9 @@ Debug script to investigate DSPy module structure
 """
 
 import sys
-import inspect
+import importlib
 import os
+import pkgutil
 
 def main():
     print("=== DSPy Debug Information ===")
@@ -14,7 +15,6 @@ def main():
         import dspy
         print("DSPy imported successfully")
         print(f"DSPy version: {getattr(dspy, '__version__', 'unknown')}")
-        print(f"DSPy module location: {inspect.getfile(dspy)}")
         
         # Check for LM attribute
         if hasattr(dspy, 'LM'):
@@ -37,27 +37,50 @@ def main():
                 if not attr.startswith('_'):
                     print(f"  {attr}")
         
+        # Check installed packages
+        print("\nInstalled packages:")
+        try:
+            import pkg_resources
+            for dist in pkg_resources.working_set:
+                if 'dspy' in dist.project_name.lower():
+                    print(f"  {dist.project_name} {dist.version}")
+        except ImportError:
+            print("  pkg_resources not available")
+        
+        # Check for simpledspy
+        try:
+            import simpledspy
+            print("\nsimpledspy is installed")
+            print(f"simpledspy version: {getattr(simpledspy, '__version__', 'unknown')}")
+            print("simpledspy attributes:")
+            for attr in sorted(dir(simpledspy)):
+                if not attr.startswith('_'):
+                    print(f"  {attr}")
+                    
+            # Check if simpledspy has LM
+            if hasattr(simpledspy, 'LM'):
+                print("simpledspy.LM exists")
+        except ImportError:
+            print("\nsimpledspy is NOT installed")
+        
+        # Check if dspy is a namespace package
+        spec = importlib.util.find_spec('dspy')
+        if spec:
+            print(f"\nDSPy spec: {spec}")
+            print(f"DSPy spec origin: {spec.origin}")
+            print(f"DSPy spec submodule_search_locations: {spec.submodule_search_locations}")
+            
+            if spec.submodule_search_locations:
+                print("\nDSPy submodules:")
+                for location in spec.submodule_search_locations:
+                    if os.path.exists(location):
+                        for _, name, ispkg in pkgutil.iter_modules([location]):
+                            print(f"  {name} ({'package' if ispkg else 'module'})")
+        
         # Check Python path
-        print("\nPython path:")
-        for path in sys.path:
+        print("\nPython path (first 5 entries):")
+        for path in sys.path[:5]:
             print(f"  {path}")
-        
-        # Check for multiple dspy installations
-        print("\nChecking for multiple DSPy installations:")
-        dspy_locations = []
-        for path in sys.path:
-            potential_dspy = os.path.join(path, 'dspy')
-            if os.path.exists(potential_dspy):
-                dspy_locations.append(potential_dspy)
-        
-        if len(dspy_locations) > 1:
-            print("WARNING: Multiple DSPy installations found:")
-            for loc in dspy_locations:
-                print(f"  {loc}")
-        elif dspy_locations:
-            print(f"Single DSPy installation found at: {dspy_locations[0]}")
-        else:
-            print("No DSPy installation directory found in sys.path")
             
     except ImportError as e:
         print(f"Failed to import dspy: {e}")
