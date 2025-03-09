@@ -60,7 +60,38 @@ def test_optimizer_with_mock_mode(mock_metric: Callable[[Any, Any], float) -> No
     optimizer = FullyEvolutionaryPromptOptimizer(mock_metric, use_mock=True)
     assert optimizer.use_mock is True
 
-def test_parameter_validation(mock_metric: Callable[[Any, Any], float) -> None:
+def test_parameter_validation(mock_metric: Callable[[Any, Any], float]) -> None:
+    # Test invalid metric
+    with pytest.raises(TypeError):
+        FullyEvolutionaryPromptOptimizer("not_a_function")
+
+    # Test invalid generations
+    with pytest.raises(ValueError):
+        FullyEvolutionaryPromptOptimizer(mock_metric, generations=0)
+    with pytest.raises(ValueError):
+        FullyEvolutionaryPromptOptimizer(mock_metric, generations=-1)
+
+    # Test invalid mutation rate
+    with pytest.raises(ValueError):
+        FullyEvolutionaryPromptOptimizer(mock_metric, mutation_rate=1.1)
+    with pytest.raises(ValueError):
+        FullyEvolutionaryPromptOptimizer(mock_metric, mutation_rate=-0.1)
+
+    # Test invalid max workers
+    with pytest.raises(ValueError):
+        FullyEvolutionaryPromptOptimizer(mock_metric, max_workers=0)
+    with pytest.raises(ValueError):
+        FullyEvolutionaryPromptOptimizer(mock_metric, max_workers=-1)
+
+    # Test invalid growth rate
+    with pytest.raises(ValueError):
+        FullyEvolutionaryPromptOptimizer(mock_metric, growth_rate=1.1)
+    with pytest.raises(ValueError):
+        FullyEvolutionaryPromptOptimizer(mock_metric, growth_rate=-0.1)
+
+    # Test invalid max population
+    with pytest.raises(ValueError):
+        FullyEvolutionaryPromptOptimizer(mock_metric, max_population=0)
     # Test invalid metric
     with pytest.raises(TypeError):
         FullyEvolutionaryPromptOptimizer("not_a_function")

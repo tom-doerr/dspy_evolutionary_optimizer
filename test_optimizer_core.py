@@ -16,6 +16,26 @@ def mock_metric() -> Callable[[Any, Any], float]:
 
 
 def test_parallel_evaluation(mock_metric: Callable[[Any, Any], float]) -> None:
+    # Test normal case
+    optimizer = FullyEvolutionaryPromptOptimizer(metric=mock_metric, max_workers=2)
+    signature = dspy.Signature("text -> label", "Given text, generate a label")
+    program = dspy.Predict(signature)
+    examples = [
+        dspy.Example(text="Great product!", label="positive"),
+        dspy.Example(text="Awful service.", label="negative"),
+    ]
+    score = optimizer._evaluate(program, Chromosome(), examples)
+    assert 0 <= score <= 1.0
+
+    # Test single worker case
+    optimizer = FullyEvolutionaryPromptOptimizer(metric=mock_metric, max_workers=1)
+    score = optimizer._evaluate(program, Chromosome(), examples)
+    assert 0 <= score <= 1.0
+
+    # Test large number of workers
+    optimizer = FullyEvolutionaryPromptOptimizer(metric=mock_metric, max_workers=100)
+    score = optimizer._evaluate(program, Chromosome(), examples)
+    assert 0 <= score <= 1.0
     optimizer = FullyEvolutionaryPromptOptimizer(metric=mock_metric, max_workers=2)
 
     signature = dspy.Signature("text -> label", "Given text, generate a label")
@@ -31,6 +51,30 @@ def test_parallel_evaluation(mock_metric: Callable[[Any, Any], float]) -> None:
 
 
 def test_mock_prediction(mock_metric: Callable[[Any, Any], float]) -> None:
+    # Test basic mock prediction
+    optimizer = FullyEvolutionaryPromptOptimizer(metric=mock_metric, use_mock=True)
+    signature = dspy.Signature("text -> label", "Given text, generate a label")
+    example = dspy.Example(text="Great product!", label="positive")
+    pred = optimizer._create_mock_prediction(signature, {"text": "test"}, example)
+    assert hasattr(pred, "label")
+    assert isinstance(pred.label, str)
+
+    # Test multiple output fields
+    signature = dspy.Signature("text -> label,score", "Given text, generate label and score")
+    pred = optimizer._create_mock_prediction(signature, {"text": "test"}, example)
+    assert hasattr(pred, "label")
+    assert hasattr(pred, "score")
+    assert isinstance(pred.label, str)
+    assert isinstance(pred.score, str)
+
+    # Test complex input
+    signature = dspy.Signature("text,metadata -> label", "Given text and metadata, generate label")
+    pred = optimizer._create_mock_prediction(
+        signature, 
+        {"text": "test", "metadata": {"source": "web"}}, 
+        example
+    )
+    assert hasattr(pred, "label")
     optimizer = FullyEvolutionaryPromptOptimizer(metric=mock_metric, use_mock=True)
 
     signature = dspy.Signature("text -> label", "Given text, generate a label")
