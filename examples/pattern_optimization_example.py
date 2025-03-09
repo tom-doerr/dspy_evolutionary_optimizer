@@ -12,7 +12,7 @@ from evoprompt.visualization import plot_evolution_history
 
 def main():
     # Initialize the language model
-    lm = dspy.LM('openrouter/google/gemini-2.0-flash-001', cache=False)
+    lm = dspy.LM('openrouter/google/gemini-2.0-flash-001', cache=False, max_tokens=30)
     
     # Configure DSPy with the language model
     dspy.configure(lm=lm)
@@ -63,7 +63,7 @@ def main():
         generations=8,
         mutation_rate=0.8,  # High mutation rate for more exploration
         growth_rate=0.5,    # Higher growth rate for more exploration
-        max_population=20,  # Larger population size
+        max_population=100,
         max_inference_calls=200,  # Increased inference call limit
         debug=True,
         use_mock=False      # Use real LLM calls for this example
