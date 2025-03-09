@@ -18,9 +18,6 @@ max-returns=5
 max-attributes=5
 max-public-methods=5
 max-parents=3
-
-# Complexity settings
-[DESIGN]
 max-complexity=5
 min-public-methods=1
 min-similarity-lines=4
