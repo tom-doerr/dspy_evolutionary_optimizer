@@ -1,13 +1,15 @@
-import time
+"""Test suite for the evolutionary prompt optimizer."""
 
+# ruff: noqa: S101  # Allow assert statements in tests
+import time
 import dspy
 import pytest
 import pytest_timeout
-
 from evoprompt.optimizer import FullyEvolutionaryPromptOptimizer
 
 
 class TestFullyEvolutionaryPromptOptimizer:
+    """Test cases for the FullyEvolutionaryPromptOptimizer class."""
     @pytest.fixture
     def simple_program(self):
         """Fixture for a simple DSPy program."""
