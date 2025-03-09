@@ -1,11 +1,13 @@
 """Core implementation of the evolutionary prompt optimizer."""
 
+import copy
 import os
 import random
 from statistics import mean
 import time
 
 import dspy
+from evoprompt.chromosome import Chromosome
 from rich.console import Console, Group
 from rich.panel import Panel
 from rich.table import Table

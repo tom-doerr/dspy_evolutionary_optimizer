@@ -1,10 +1,12 @@
-import pytest
+"""Test suite for the evolutionary prompt optimizer."""
 
+import pytest
 from evoprompt.optimizer import FullyEvolutionaryPromptOptimizer
 
 
 @pytest.fixture
 def mock_metric():
+    """Fixture providing a mock metric function that always returns 1.0."""
     def metric(pred, example):
         return 1.0
     return metric

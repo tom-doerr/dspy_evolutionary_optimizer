@@ -30,20 +30,18 @@ ignore = [
     "PLR2004",  # Magic value used
 ]
 
+[lint]
 # Complexity settings
-[mccabe]
-max-complexity = 5
+mccabe.max-complexity = 5
 
 # isort configuration
-[isort]
-known-first-party = ["evoprompt"]
-combine-as-imports = true
-force-sort-within-sections = true
-order-by-type = false
-lines-after-imports = 2
-lines-between-types = 1
+isort.known-first-party = ["evoprompt"]
+isort.combine-as-imports = true
+isort.force-sort-within-sections = true
+isort.order-by-type = false
+isort.lines-after-imports = 2
+isort.lines-between-types = 1
 
 # flake8-bugbear configuration
-[flake8-bugbear]
-extend-immutable-calls = ["frozenset", "tuple"]
+flake8-bugbear.extend-immutable-calls = ["frozenset", "tuple"]
 
