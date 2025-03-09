@@ -20,7 +20,7 @@ class FullyEvolutionaryPromptOptimizer:
     """
     
     def __init__(self, metric, generations=10, mutation_rate=0.5, growth_rate=0.3, max_population=100, 
-                 max_inference_calls=1000, debug=False, use_mock=None):
+                 max_inference_calls=100, debug=False, use_mock=None):
         """
         Initialize the optimizer.
         
