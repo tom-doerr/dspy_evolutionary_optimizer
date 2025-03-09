@@ -720,68 +720,91 @@ class FullyEvolutionaryPromptOptimizer:
         return prompt
 
     def _get_mutations(self):
-        """Return list of mutation functions."""
+        """Return list of mutation functions with weights based on effectiveness."""
         return [
-            # Add instructional phrases
-            lambda p: p + " " + random.choice([
+            # Add instructional phrases (weighted by usefulness)
+            (0.3, lambda p: p + " " + random.choice([
                 "to generate", "with details", "for classification", "-> answer",
                 "analyze and respond", "consider carefully", "be concise", "keep it short"
-            ]),
+            ])),
 
             # Remove some words (but preserve placeholders)
-            lambda p: " ".join(w for w in p.split() if "{{input}}" in w or "{{output}}" in w or random.random() > 0.2),
+            (0.2, lambda p: " ".join(w for w in p.split() 
+                if "{{input}}" in w or "{{output}}" in w or random.random() > 0.2)),
 
             # Enhance input placeholder
-            lambda p: p.replace("{{input}}", random.choice([
+            (0.15, lambda p: p.replace("{{input}}", random.choice([
                 "Input: {{input}}", "{{input}} here", "Given {{input}}",
                 "Consider {{input}}", "Analyze {{input}}", "From {{input}}"
-            ])),
+            ]))),
 
-            # Enhance output placeholder
-            lambda p: p.replace("{{output}}", random.choice([
+            # Enhance output placeholder  
+            (0.15, lambda p: p.replace("{{output}}", random.choice([
                 "-> {{output}}", "{{output}} result", "yields {{output}}",
                 "produce {{output}}", "return {{output}}", "output: {{output}}"
-            ])),
+            ]))),
 
             # Add task-specific instructions
-            lambda p: p + " " + random.choice([
+            (0.1, lambda p: p + " " + random.choice([
                 "Be concise.", "Explain reasoning.", "Be accurate.",
                 "Consider all aspects.", "Focus on key points.",
                 "Be specific.", "Be brief.", "Be clear.",
                 "Provide details.", "Be precise."
-            ]),
+            ])),
 
             # Add general quality instructions
-            lambda p: p + " " + random.choice([
+            (0.05, lambda p: p + " " + random.choice([
                 "Ensure high quality.", "Maximize accuracy.",
                 "Optimize for clarity.", "Be comprehensive yet concise.",
                 "Focus on relevance.", "Prioritize correctness.",
                 "Maintain consistency.", "Aim for completeness."
-            ]),
+            ])),
 
             # Character-level mutations (limited to avoid breaking placeholders)
-            lambda p: p.replace(" ", " " + random.choice(["", "", "", "really ", "carefully ", "properly ", "thoroughly "]))
+            (0.05, lambda p: p.replace(" ", " " + random.choice([
+                "", "", "", "really ", "carefully ", "properly ", "thoroughly "
+            ])))
         ]
 
     def _mutate(self, prompt: str) -> str:
-        """Apply a random mutation to a prompt.
+        """Apply weighted random mutations to a prompt.
         
         Args:
             prompt: Prompt to mutate
             
         Returns:
-            A mutated version of the prompt
+            A mutated version of the prompt with controlled intensity
 
         """
         prompt = self._ensure_placeholders(prompt)
-        mutations = self._get_mutations()
+        weighted_mutations = self._get_mutations()
         
-        # Apply 1-2 mutations
-        num_mutations = random.randint(1, 2)
+        # Calculate mutation intensity based on current score
+        current_score = self._get_prompt_score(prompt)
+        intensity = 1.0 - current_score  # More intense mutations for lower scores
+        
+        # Apply mutations based on intensity
+        num_mutations = max(1, min(3, int(3 * intensity)))
+        mutations = [m for _, m in weighted_mutations]
+        weights = [w for w, _ in weighted_mutations]
+        
         for _ in range(num_mutations):
-            prompt = random.choice(mutations)(prompt)
+            # Select mutation based on weights
+            mutation_fn = random.choices(mutations, weights=weights, k=1)[0]
+            prompt = mutation_fn(prompt)
+            
+            # Ensure prompt doesn't grow too large
+            if len(prompt.split()) > 50:
+                prompt = " ".join(prompt.split()[:50])
 
         return prompt
+
+    def _get_prompt_score(self, prompt: str) -> float:
+        """Get the current score for a prompt if it exists in population."""
+        for p in self.population:
+            if p["prompt"] == prompt and p["score"] is not None:
+                return p["score"]
+        return 0.0  # Default score for new prompts
 
     def _create_mock_prediction_class(self):
         """Create the MockPrediction class."""
