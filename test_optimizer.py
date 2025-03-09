@@ -22,7 +22,8 @@ def mock_signature() -> dspy.Signature:
     signature.__doc__ = "Given text, generate a label"
     return signature
 
-def test_optimizer_initialization(mock_metric: Callable[[Any, Any], float) -> None:
+def test_optimizer_initialization(mock_metric: Callable[[Any, Any], float]) -> None:
+    """Test optimizer initialization with various parameters."""
     optimizer = FullyEvolutionaryPromptOptimizer(
         metric=mock_metric,
         generations=5,
@@ -31,8 +32,19 @@ def test_optimizer_initialization(mock_metric: Callable[[Any, Any], float) -> No
         max_population=20,
         debug=True
     )
-    assert optimizer.use_mock is False
-    assert optimizer.max_workers == 1
+    
+    # Verify configuration
+    assert optimizer.config.metric == mock_metric
+    assert optimizer.config.generations == 5
+    assert optimizer.config.mutation_rate == 0.5
+    assert optimizer.config.growth_rate == 0.3
+    assert optimizer.config.max_population == 20
+    assert optimizer.config.debug is True
+    
+    # Verify state
+    assert optimizer.state.inference_count == 0
+    assert optimizer.state.population is None
+    assert optimizer.state.history is None
 
 def test_parallel_initialization(mock_metric: Callable[[Any, Any], float) -> None:
     optimizer = FullyEvolutionaryPromptOptimizer(mock_metric, max_workers=4)

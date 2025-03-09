@@ -48,24 +48,23 @@ class FullyEvolutionaryPromptOptimizer:
     """
 
     def __init__(self, metric: Callable, **kwargs):
-        """Initialize the optimizer.
+        """Initialize the optimizer with configuration and state."""
+        self._initialize_config(metric, kwargs)
+        self._initialize_state()
+        self._log_mock_mode()
         
-        Args:
-            metric: Function that evaluates a prediction against an example
-            generations: Number of generations to evolve
-            mutation_rate: Probability of mutating a prompt
-            growth_rate: Base rate for spawning new variants (multiplied by score)
-            max_population: Maximum number of prompts in the population
-            max_inference_calls: Maximum number of LLM inference calls to make
-            debug: Enable debug logging
-            use_mock: Force mock mode (True/False) or auto-detect if None
-            max_workers: Number of parallel workers for evaluation (1 = serial)
-        """
+    def _initialize_config(self, metric: Callable, kwargs: dict) -> None:
+        """Set up optimizer configuration."""
         self.config = OptimizerConfig(metric=metric, **kwargs)
+        
+    def _initialize_state(self) -> None:
+        """Initialize optimizer state variables."""
         self.state = OptimizerState()
         self.history = []
         self.population = []
-
+        
+    def _log_mock_mode(self) -> None:
+        """Log mock mode status if debug is enabled."""
         if self.config.use_mock and self.config.debug:
             print("MOCK MODE ENABLED: Using simulated responses instead of real LLM calls")
 
