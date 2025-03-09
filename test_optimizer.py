@@ -1,6 +1,8 @@
-import pytest
-from evoprompt.optimizer import FullyEvolutionaryPromptOptimizer
 import dspy
+import pytest
+
+from evoprompt.optimizer import FullyEvolutionaryPromptOptimizer
+
 
 class TestFullyEvolutionaryPromptOptimizer:
     @pytest.fixture
