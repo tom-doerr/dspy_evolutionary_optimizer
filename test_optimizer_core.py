@@ -18,8 +18,7 @@ def mock_metric() -> Callable[[Any, Any], float]:
 def test_parallel_evaluation(mock_metric: Callable[[Any, Any], float]) -> None:
     # Test normal case
     optimizer = FullyEvolutionaryPromptOptimizer(metric=mock_metric, max_workers=2)
-    signature = dspy.Signature("text -> label")
-    signature.__doc__ = "Given text, generate a label"
+    signature = dspy.Signature("text -> label", "Given text, generate a label")
     program = dspy.Predict(signature)
     examples = [
         dspy.Example(text="Great product!", label="positive"),
@@ -58,6 +57,7 @@ def test_mock_prediction(mock_metric: Callable[[Any, Any], float]) -> None:
     optimizer = FullyEvolutionaryPromptOptimizer(metric=mock_metric)
     optimizer.config.use_mock = True  # Set mock mode through config
     signature = dspy.Signature("text -> label", "Given text, generate a label")
+    MockPrediction = optimizer._create_mock_prediction_class()
     example = dspy.Example(text="Great product!", label="positive")
     # Access protected member for testing purposes
     # pylint: disable=protected-access
@@ -96,11 +96,10 @@ def test_mock_prediction(mock_metric: Callable[[Any, Any], float]) -> None:
 def test_evolution_history(mock_metric: Callable[[Any, Any], float]) -> None:
     optimizer = FullyEvolutionaryPromptOptimizer(metric=mock_metric)
     population = optimizer._initialize_population()
-    optimizer._log_progress(1, population)
-
     # Initialize history if empty
     if not optimizer.history:
         optimizer.history = []
+    optimizer._log_progress(1, population)
 
     optimizer.history = [{"iteration": 1, "best_score": 0.9, "population_size": 10}]
     optimizer.history = [{"iteration": 1, "best_score": 0.9, "population_size": 10}]
