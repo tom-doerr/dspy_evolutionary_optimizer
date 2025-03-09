@@ -14,7 +14,8 @@ def _mock_metric() -> Callable[[Any, Any], float]:
 
     return metric
 
-@pytest.fixture(name="metric_fixture") 
+
+@pytest.fixture(name="metric_fixture")
 def _metric_fixture() -> Callable[[Any, Any], float]:
     def metric(_pred: Any, _example: Any) -> float:
         return 1.0
@@ -89,7 +90,7 @@ def test_parameter_validation(_metric_fixture: Callable[[Any, Any], float]) -> N
         growth_rate=0.3,
         max_population=20,
         debug=True,
-        use_mock=True
+        use_mock=True,
     )
     assert optimizer.config.generations == 5
     assert optimizer.config.mutation_rate == 0.5
@@ -103,7 +104,7 @@ def test_parameter_validation(_metric_fixture: Callable[[Any, Any], float]) -> N
         growth_rate=0.0,
         max_population=1,
         debug=False,
-        use_mock=False
+        use_mock=False,
     )
     assert optimizer.config.generations == 1
     assert optimizer.config.mutation_rate == 0.0
