@@ -14,9 +14,8 @@ def main():
     # Initialize the language model
     lm = dspy.LM('openrouter/google/gemini-2.0-flash-001', cache=False)
     
-    # Configure DSPy
-    dspy.settings.configure(lm=lm)
-    print("DSPy settings - Cache:", dspy.settings.cache)
+    # Configure DSPy with the language model
+    dspy.configure(lm=lm)
     
     # Test LM connectivity
     try:

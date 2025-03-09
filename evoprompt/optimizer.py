@@ -165,7 +165,6 @@ class FullyEvolutionaryPromptOptimizer:
             
             if self.debug:
                 print(f"\nEvaluating prompt: '{prompt}'")
-                print(f"  DSPy cache setting: {dspy.settings.cache}")
             
             for ex in trainset:
                 try:
