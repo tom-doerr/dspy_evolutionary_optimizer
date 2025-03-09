@@ -60,21 +60,28 @@ class FullyEvolutionaryPromptOptimizer:
             print("MOCK MODE ENABLED: Using simulated responses instead of real LLM calls")
 
     def _select_prompt(self, population):
-        """Select a prompt probabilistically based on score."""
+        """Select a prompt using Pareto distribution to favor top performers."""
         scored_population = [p for p in population if p["score"] is not None]
         if not scored_population:
             return random.choice(population)
         
-        scores = [p["score"] for p in scored_population]
-        min_score = min(scores)
-        max_score = max(scores)
+        # Sort population by score descending
+        scored_population.sort(key=lambda x: x["score"], reverse=True)
         
-        if max_score == min_score:
-            return random.choice(scored_population)
+        # Calculate Pareto weights (80/20 rule)
+        weights = []
+        alpha = 1.16  # Pareto shape parameter (80/20 rule)
+        n = len(scored_population)
+        for i in range(n):
+            # Weight decreases exponentially based on rank
+            weight = (n - i) ** (-alpha)
+            weights.append(weight)
             
-        normalized_scores = [(s - min_score) / (max_score - min_score) for s in scores]
-        total = sum(normalized_scores)
-        probs = [s / total for s in normalized_scores]
+        # Normalize weights
+        total = sum(weights)
+        probs = [w / total for w in weights]
+        
+        # Select using weighted probabilities
         return random.choices(scored_population, weights=probs, k=1)[0]
 
     def _update_population(self, population, iteration, recent_scores):
@@ -233,14 +240,33 @@ class FullyEvolutionaryPromptOptimizer:
         return population, recent_scores
 
     def _mate_high_performers(self, population, selected, top_20_percentile, iteration):
-        """Mate high performing prompts."""
+        """Mate high performing prompts using Pareto selection."""
+        # Get all high performers (top 20%)
         high_performers = [p for p in population
                          if p["score"] is not None
                          and p["score"] >= top_20_percentile
                          and p != selected]
 
         if high_performers:
-            mate = random.choice(high_performers)
+            # Sort high performers by score descending
+            high_performers.sort(key=lambda x: x["score"], reverse=True)
+            
+            # Calculate Pareto weights for high performers
+            weights = []
+            alpha = 1.16  # Pareto shape parameter
+            n = len(high_performers)
+            for i in range(n):
+                weight = (n - i) ** (-alpha)
+                weights.append(weight)
+                
+            # Normalize weights
+            total = sum(weights)
+            probs = [w / total for w in weights]
+            
+            # Select mate using Pareto distribution
+            mate = random.choices(high_performers, weights=probs, k=1)[0]
+            
+            # Create new prompt through crossover
             new_prompt = self._crossover(selected["prompt"], mate["prompt"])
             population.append({"prompt": new_prompt, "score": None, "last_used": iteration})
 
