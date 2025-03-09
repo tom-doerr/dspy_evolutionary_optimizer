@@ -1,6 +1,8 @@
-# EvolutionaryPromptOptimizer
+# EvolutionaryPromptOptimizer (Work in Progress)
 
-A package for evolving prompts with numeric feedback using evolutionary algorithms.
+⚠️ This project is currently under active development and should be considered experimental. ⚠️
+
+A package for evolving prompts with numeric feedback using evolutionary algorithms. The API and functionality may change significantly in future versions.
 
 ## Installation
 
@@ -8,12 +10,22 @@ A package for evolving prompts with numeric feedback using evolutionary algorith
 pip install -e .
 ```
 
-## Features
+> **Note**: This package is still in development. We recommend installing in a virtual environment and pinning to specific versions as they become available.
 
-- **Evolutionary Optimization**: Evolves prompts over generations to maximize a metric
-- **Numeric Feedback**: Tracks and reports scores for each generation
-- **Visualization**: Plot evolution history to see improvement over time
-- **Flexible Metrics**: Use any custom metric function for optimization
+## Features (Current and Planned)
+
+✅ **Implemented Features**
+- Evolutionary Optimization: Evolves prompts over generations to maximize a metric
+- Numeric Feedback: Tracks and reports scores for each generation
+- Visualization: Plot evolution history to see improvement over time
+- Flexible Metrics: Use any custom metric function for optimization
+
+🚧 **Planned Features**
+- More sophisticated mutation strategies
+- Better parallelization support
+- Enhanced visualization capabilities
+- Comprehensive documentation
+- Additional examples and tutorials
 
 ## Usage
 
@@ -120,7 +132,7 @@ result = optimized_generator(prompt="Write a short sentence.").text
 print(f"Result: {result}")
 ```
 
-## How It Works
+## How It Works (Current Implementation)
 
 1. **Population Initialization**: Starts with a seed prompt
 2. **Evaluation**: Scores each prompt using the provided metric
@@ -128,10 +140,14 @@ print(f"Result: {result}")
 4. **Selection**: Keeps the best prompts for the next generation
 5. **Feedback**: Reports statistics for each generation
 
-## Customization
+> **Note**: The current implementation is a proof-of-concept and may undergo significant changes as we refine the evolutionary algorithms and optimization strategies.
+
+## Customization (Experimental)
 
 You can customize the optimizer with these parameters:
 
 - `generations`: Number of generations to evolve (default: 10)
 - `mutation_rate`: Probability of mutating a prompt (default: 0.5)
 - `growth_rate`: Base rate for spawning new variants (default: 0.3)
+
+> **Warning**: These parameters are experimental and their effects may change in future versions. We recommend testing different configurations and providing feedback on what works best for your use case.
