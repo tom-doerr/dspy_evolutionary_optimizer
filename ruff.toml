@@ -1,0 +1,19 @@
+line-length = 88
+select = ["E", "W", "F", "I", "B", "C", "A", "N", "UP", "YTT", "RUF"]
+ignore = ["E501", "E203", "N802", "N803", "N806"]
+exclude = [
+    ".git",
+    ".mypy_cache", 
+    ".pytest_cache",
+    ".ruff_cache",
+    "__pycache__",
+    "build",
+    "dist",
+    "venv",
+    "*.pyi",
+]
+
+[isort]
+known-first-party = ["evoprompt"]
+sections = ["FUTURE", "STDLIB", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
+default-section = "FIRSTPARTY"
