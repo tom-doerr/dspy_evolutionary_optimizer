@@ -1,5 +1,4 @@
-"""Example of using the FullyEvolutionaryPromptOptimizer for a question answering task.
-"""
+"""Example of using the FullyEvolutionaryPromptOptimizer for a question answering task."""
 
 import dspy
 
@@ -7,7 +6,8 @@ from evoprompt import FullyEvolutionaryPromptOptimizer
 from evoprompt.visualization import plot_evolution_history
 
 
-def main():
+def main() -> None:
+    """Run the question answering example using evolutionary prompt optimization."""
     # Initialize the language model
     # Use a direct model configuration to ensure we're actually calling the API
     lm = dspy.LM('openrouter/google/gemini-2.0-flash-001')
