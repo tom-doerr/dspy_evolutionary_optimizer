@@ -7,17 +7,27 @@ from evoprompt.chromosome import Chromosome
 from evoprompt import FullyEvolutionaryPromptOptimizer
 
 @pytest.fixture
-def optimizer():
-    def mock_metric(pred, example):
-        return 1.0 if pred.label == example.label else 0.0
+def mock_metric():
+    """Fixture providing a mock metric function."""
+    def metric(pred, example):  # pylint: disable=unused-argument
+        return 1.0
+    return metric
+
+@pytest.fixture
+def basic_optimizer(mock_metric):
+    """Fixture providing a basic optimizer instance."""
     return FullyEvolutionaryPromptOptimizer(mock_metric)
 
+@pytest.fixture
+def mock_signature():
+    """Fixture providing a mock DSPy signature."""
+    signature = dspy.Signature("text -> label")
+    signature.__doc__ = "Given text, generate a label"
+    return signature
 
-def test_optimizer_initialization():
+
+def test_optimizer_initialization(mock_metric):
     """Test basic optimizer initialization."""
-    def mock_metric(pred, example):
-        return 1.0 if pred.label == example.label else 0.0
-        
     optimizer = FullyEvolutionaryPromptOptimizer(
         metric=mock_metric,
         generations=5,
@@ -27,17 +37,11 @@ def test_optimizer_initialization():
         debug=True
     )
     
-    # Test public interface only
-    # Test public interface only
     assert optimizer.use_mock is False
 
-def test_population_initialization():
+def test_population_initialization(basic_optimizer):
     """Test that population is initialized correctly."""
-    def mock_metric(pred, example):
-        return 1.0 if pred.label == example.label else 0.0
-        
-    optimizer = optimizer()
-    population = optimizer._initialize_population()  # pylint: disable=protected-access
+    population = basic_optimizer._initialize_population()
     
     assert len(population) == 1
     assert isinstance(population[0]["chromosome"], Chromosome)
