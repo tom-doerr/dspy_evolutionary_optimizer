@@ -161,41 +161,71 @@ class FullyEvolutionaryPromptOptimizer:
                         "best_prompt": max(population, key=lambda x: x["score"] if x["score"] is not None else -float('inf'))["prompt"]
                     })
                     
-                    # Create rich table for progress display
+                    # Create detailed progress display
                     console = Console()
-                    table = Table(title="Evolution Progress", show_header=True, header_style="bold magenta")
                     
-                    table.add_column("Iteration", justify="right")
-                    table.add_column("Best Score", justify="right")
-                    table.add_column("Avg Score", justify="right")
-                    table.add_column("Population", justify="right")
-                    table.add_column("Best Prompt", justify="left")
+                    # Main progress panel
+                    main_panel = Table.grid(padding=(1, 2))
+                    main_panel.add_column(justify="left", style="cyan")
+                    main_panel.add_column(justify="right", style="magenta")
                     
                     # Add current stats
-                    table.add_row(
-                        str(iteration),
-                        f"{best_score:.3f}",
-                        f"{avg_score:.3f}",
-                        str(len(population)),
-                        best_prompt[:50] + "..." if len(best_prompt) > 50 else best_prompt
+                    main_panel.add_row("Iteration", f"[bold]{iteration}")
+                    main_panel.add_row("Best Score", f"[green]{best_score:.3f}")
+                    main_panel.add_row("Avg Score", f"[yellow]{avg_score:.3f}")
+                    main_panel.add_row("Population", f"[blue]{len(population)}")
+                    main_panel.add_row("Inference Calls", f"[cyan]{self.inference_count}/{self.max_inference_calls}")
+                    
+                    # Add progress bar
+                    progress = ProgressBar(
+                        total=self.max_inference_calls,
+                        completed=self.inference_count,
+                        width=50,
+                        style="green",
+                        complete_style="bold white on green",
+                        pulse_style="bold white on blue"
                     )
                     
-                    # Add recent history
+                    # Best prompt panel
+                    prompt_panel = Panel(
+                        best_prompt,
+                        title="[bold]Best Prompt",
+                        border_style="blue",
+                        padding=(1, 2),
+                        width=80
+                    )
+                    
+                    # Recent history table
+                    history_table = Table(title="[bold]Recent History", show_header=True, header_style="bold magenta")
+                    history_table.add_column("Iteration", justify="right")
+                    history_table.add_column("Best Score", justify="right")
+                    history_table.add_column("Avg Score", justify="right")
+                    history_table.add_column("Population", justify="right")
+                    
                     for entry in self.history[-5:]:
-                        table.add_row(
+                        history_table.add_row(
                             str(entry['iteration']),
                             f"{entry['best_score']:.3f}",
                             f"{entry['avg_score']:.3f}",
-                            str(entry['population_size']),
-                            entry['best_prompt'][:50] + "..." if len(entry['best_prompt']) > 50 else entry['best_prompt']
+                            str(entry['population_size'])
                         )
                     
-                    # Print the table
-                    console.print(table)
+                    # Layout the panels
+                    console.print(Panel(
+                        Group(
+                            main_panel,
+                            progress,
+                            prompt_panel,
+                            history_table
+                        ),
+                        title=f"[bold]Evolution Progress - Generation {iteration}",
+                        border_style="green",
+                        padding=(1, 2),
+                        width=80
+                    ))
                     
-                    # Print progress bar
-                    progress = ProgressBar(total=self.max_inference_calls, completed=self.inference_count)
-                    console.print(progress)
+                    # Add some spacing
+                    console.print()
         
         # Make sure all chromosomes are evaluated before sorting
         for chromosome in population:
@@ -205,20 +235,39 @@ class FullyEvolutionaryPromptOptimizer:
         # Sort by score and return best predictor
         population.sort(key=lambda x: x["score"], reverse=True)
         best_prompt = population[0]["prompt"]
-        # Create final summary table
+        # Create final summary display
         console = Console()
-        table = Table(title="Evolution Results", show_header=True, header_style="bold green")
         
-        table.add_column("Metric", justify="left")
-        table.add_column("Value", justify="right")
+        # Main summary panel
+        summary_panel = Table.grid(padding=(1, 2))
+        summary_panel.add_column(justify="left", style="cyan")
+        summary_panel.add_column(justify="right", style="magenta")
         
-        table.add_row("Best Score", f"{population[0]['score']:.3f}")
-        table.add_row("Total Iterations", str(iteration))
-        table.add_row("Population Size", str(len(population)))
-        table.add_row("Inference Calls", str(self.inference_count))
-        table.add_row("Best Prompt", best_prompt)
+        summary_panel.add_row("[bold]Best Score", f"[green]{population[0]['score']:.3f}")
+        summary_panel.add_row("Total Iterations", f"[bold]{iteration}")
+        summary_panel.add_row("Population Size", f"[blue]{len(population)}")
+        summary_panel.add_row("Inference Calls", f"[cyan]{self.inference_count}")
         
-        console.print(table)
+        # Best prompt panel
+        prompt_panel = Panel(
+            best_prompt,
+            title="[bold]Optimized Prompt",
+            border_style="green",
+            padding=(1, 2),
+            width=80
+        )
+        
+        # Final layout
+        console.print(Panel(
+            Group(
+                summary_panel,
+                prompt_panel
+            ),
+            title="[bold]Evolution Results",
+            border_style="blue",
+            padding=(1, 2),
+            width=80
+        ))
         return dspy.Predict(program.signature, prompt=best_prompt)
 
     def _evaluate(self, program, prompt, trainset):
