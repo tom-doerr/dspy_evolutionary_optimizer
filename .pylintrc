@@ -1,10 +1,8 @@
 [MASTER]
 # Maximum number of lines in a module
-max-module-lines=500
+max-module-lines=200
 
 [MESSAGES CONTROL]
-# Maximum line length
-max-line-length=88
 
 [DESIGN]
 max-args=5
