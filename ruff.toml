@@ -24,9 +24,8 @@ select = [
 ]
 
 # Module size and complexity limits
-[lint.ruff]
 max-module-lines = 200  # Maximum lines per module
-max-class-lines = 200     # Maximum lines per class
+max-class-lines = 200   # Maximum lines per class
 
 # Keep existing ignores but add more reasonable ones
 ignore = [
@@ -42,15 +41,16 @@ ignore = [
     "PLR2004",  # Magic value used
 ]
 
-[lint.per-file-ignores]
-"tests/*" = ["D"]  # Don't require docstrings in tests
-"examples/*" = ["D"]  # Don't require docstrings in examples
-"src/*" = ["D"]  # Don't require docstrings in examples
+per-file-ignores = {
+    "tests/*": ["D"],  # Don't require docstrings in tests
+    "examples/*": ["D"],  # Don't require docstrings in examples
+    "src/*": ["D"]  # Don't require docstrings in examples
+}
 
-[lint.flake8-bugbear]
+[flake8-bugbear]
 extend-immutable-calls = ["frozenset", "tuple"]
 
-[lint.isort]
+[isort]
 known-first-party = ["evoprompt"]
 combine-as-imports = true
 force-sort-within-sections = true
@@ -58,11 +58,10 @@ order-by-type = false
 lines-after-imports = 2
 lines-between-types = 1
 
-# Complexity limits
-[lint.mccabe]
+[mccabe]
 max-complexity = 5  # McCabe cyclomatic complexity
 
-[lint.pylint]
+[pylint]
 max-args = 3        # Maximum number of function arguments
 max-locals = 15     # Maximum number of local variables
 max-statements = 50 # Maximum number of statements per function
@@ -71,7 +70,6 @@ max-returns = 4     # Maximum number of return statements
 max-attributes = 5  # Maximum number of class attributes
 
 # Enable additional Ruff-specific rules
-[lint]
 allow-star-arg-unpacking = false
 check-builtin-shadowing = true
 check-typed-exception = true
