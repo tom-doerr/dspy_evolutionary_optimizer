@@ -49,9 +49,9 @@ extend-immutable-calls = ["frozenset", "tuple"]
 
 # Global settings
 line-length = 88
+indent-width = 4
 
 # Formatting settings
 [format]
 indent-style = "space"
-indent-width = 4
 quote-style = "double"
