@@ -23,22 +23,6 @@ def _metric_fixture() -> Callable[[Any, Any], float]:
     return metric
 
 
-@pytest.fixture(name="metric_fixture")
-def _metric_fixture() -> Callable[[Any, Any], float]:
-    def metric(_pred: Any, _example: Any) -> float:
-        return 1.0
-
-    return metric
-
-
-@pytest.fixture(name="metric_fixture")
-def _metric_fixture() -> Callable[[Any, Any], float]:
-    def metric(_pred: Any, _example: Any) -> float:
-        return 1.0
-
-    return metric
-
-
 @pytest.fixture(name="basic_optimizer_fixture")
 def basic_optimizer_fixture(
     mock_metric: Callable[[Any, Any], float],
@@ -186,6 +170,41 @@ def _test_parameter_validation_cases(
 
 
 def test_parameter_validation(metric_fixture: Callable[[Any, Any], float]) -> None:
+    """Test validation of optimizer parameters."""
+    # Test valid parameters
+    optimizer = FullyEvolutionaryPromptOptimizer(
+        metric=metric_fixture,
+        generations=5,
+        mutation_rate=0.5,
+        growth_rate=0.3,
+        max_population=20,
+        debug=True,
+        use_mock=True
+    )
+    assert optimizer.config.generations == 5
+    assert optimizer.config.mutation_rate == 0.5
+    assert optimizer.config.use_mock is True
+
+    # Test edge cases
+    optimizer = FullyEvolutionaryPromptOptimizer(
+        metric=metric_fixture,
+        generations=1,
+        mutation_rate=0.0,
+        growth_rate=0.0,
+        max_population=1,
+        debug=False,
+        use_mock=False
+    )
+    assert optimizer.config.generations == 1
+    assert optimizer.config.mutation_rate == 0.0
+
+    # Test invalid parameters
+    with pytest.raises(ValueError):
+        FullyEvolutionaryPromptOptimizer(metric=metric_fixture, generations=0)
+    with pytest.raises(ValueError):
+        FullyEvolutionaryPromptOptimizer(metric=metric_fixture, mutation_rate=1.1)
+    with pytest.raises(ValueError):
+        FullyEvolutionaryPromptOptimizer(metric=metric_fixture, max_population=0)
     # Test valid parameters
     optimizer = FullyEvolutionaryPromptOptimizer(
         metric=_metric_fixture,
@@ -395,7 +414,36 @@ def test_parameter_validation(metric_fixture: Callable[[Any, Any], float]) -> No
         FullyEvolutionaryPromptOptimizer(mock_metric, max_workers=-1)
 
 
-def test_population_handling(_metric_fixture: Callable[[Any, Any], float]) -> None:
+def test_population_handling(metric_fixture: Callable[[Any, Any], float]) -> None:
+    """Test population handling and evolution logic."""
+    optimizer = FullyEvolutionaryPromptOptimizer(metric=metric_fixture)
+    
+    # Test empty population
+    with pytest.raises(ValueError):
+        optimizer._update_population([], iteration=1, recent_scores=[])
+
+    # Test population initialization
+    population = optimizer._initialize_population()
+    assert len(population) == 1
+    assert isinstance(population[0]["chromosome"], Chromosome)
+    assert population[0]["score"] is None
+
+    # Test population update
+    updated = optimizer._update_population(
+        population, iteration=1, recent_scores=[0.9, 0.8]
+    )
+    assert len(updated) <= 100  # Default max population size
+
+    # Test population scoring
+    scored_population = optimizer._select_using_pareto(population)
+    assert len(scored_population) > 0
+    assert all("score" in item for item in scored_population)
+
+    # Test population selection
+    selected = optimizer._select_prompt(population)
+    assert selected is not None
+    assert isinstance(selected, dict)
+    assert "chromosome" in selected
     optimizer = FullyEvolutionaryPromptOptimizer(metric=_metric_fixture)
 
     # Test empty population
