@@ -637,7 +637,9 @@ def test_population_handling(metric_fixture: Callable[[Any, Any], float]) -> Non
     with pytest.raises(TypeError):
         optimizer._update_population(None, iteration=1, recent_scores=[0.9])
     with pytest.raises(TypeError):
-        optimizer._update_population([{"invalid": "data"}], iteration=1, recent_scores=[0.9])
+        optimizer._update_population(
+            [{"invalid": "data"}], iteration=1, recent_scores=[0.9]
+        )
     """Test population handling and evolution logic."""
     optimizer = FullyEvolutionaryPromptOptimizer(metric=metric_fixture)
 
