@@ -59,6 +59,46 @@ class FullyEvolutionaryPromptOptimizer:
         if self.use_mock and self.debug:
             print("MOCK MODE ENABLED: Using simulated responses instead of real LLM calls")
 
+    def _select_prompt(self, population):
+        """Select a prompt probabilistically based on score."""
+        scored_population = [p for p in population if p["score"] is not None]
+        if not scored_population:
+            return random.choice(population)
+        
+        scores = [p["score"] for p in scored_population]
+        min_score = min(scores)
+        max_score = max(scores)
+        
+        if max_score == min_score:
+            return random.choice(scored_population)
+            
+        normalized_scores = [(s - min_score) / (max_score - min_score) for s in scores]
+        total = sum(normalized_scores)
+        probs = [s / total for s in normalized_scores]
+        return random.choices(scored_population, weights=probs, k=1)[0]
+
+    def _update_population(self, population, iteration, recent_scores):
+        """Update population based on scores and iteration."""
+        if recent_scores:
+            recent_scores_sorted = sorted(recent_scores)
+            top_20_percentile = recent_scores_sorted[int(len(recent_scores_sorted) * 0.8)]
+        else:
+            top_20_percentile = 0
+            
+        # Remove stale prompts
+        population = [p for p in population
+                     if iteration - p["last_used"] < 10
+                     or p["score"] is None]
+        
+        # Enforce population size limit
+        if len(population) > self.max_population:
+            scored_population = [p for p in population if p["score"] is not None]
+            if len(scored_population) > self.max_population:
+                scored_population.sort(key=lambda x: x["score"])
+                population = scored_population[-self.max_population:]
+                
+        return population
+
     def compile(self, program, trainset):
         """
         Evolve prompts using continuous probabilistic selection and mating.
@@ -187,8 +227,9 @@ class FullyEvolutionaryPromptOptimizer:
                     )
 
                     # Best prompt panel
+                    current_best = max(population, key=lambda x: x["score"] if x["score"] is not None else -float('inf'))["prompt"]
                     prompt_panel = Panel(
-                        best_prompt,
+                        current_best,
                         title="[bold]Best Prompt",
                         border_style="blue",
                         padding=(1, 2),
@@ -269,6 +310,31 @@ class FullyEvolutionaryPromptOptimizer:
             width=80
         ))
         return dspy.Predict(program.signature, prompt=best_prompt)
+
+    def _make_prediction(self, program, prompt, input_kwargs):
+        """Make a prediction using the program and prompt."""
+        if self.use_mock:
+            return self._create_mock_prediction(program.signature, input_kwargs, None)
+            
+        if self.max_inference_calls > 0 and self.inference_count >= self.max_inference_calls:
+            if self.debug:
+                print("  Inference call limit reached, using mock prediction")
+            return self._create_mock_prediction(program.signature, input_kwargs, None)
+            
+        predictor = dspy.Predict(program.signature, prompt=prompt)
+        return predictor(**input_kwargs)
+
+    def _calculate_scores(self, predictions, trainset):
+        """Calculate scores for predictions against training examples."""
+        scores = []
+        for pred, ex in zip(predictions, trainset):
+            try:
+                score = self.metric(pred, ex)
+                scores.append(score)
+            except Exception as e:
+                print(f"Error in metric calculation: {e}")
+                scores.append(0.0)
+        return scores
 
     def _evaluate(self, program, prompt, trainset):
         """
