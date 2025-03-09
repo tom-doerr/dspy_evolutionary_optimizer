@@ -257,7 +257,7 @@ class FullyEvolutionaryPromptOptimizer:
             print(f"Evaluation error: {e}")
             return 0.0  # Return low score for failed evaluations
 
-    def _crossover(self, prompt1, prompt2):
+    def _crossover(self, prompt1: str, prompt2: str) -> str:
         """
         Combine two prompts by splitting at a random point and joining.
         
@@ -276,7 +276,7 @@ class FullyEvolutionaryPromptOptimizer:
         crossover_point = random.randint(0, min_len)
         return " ".join(p1_parts[:crossover_point] + p2_parts[crossover_point:])
 
-    def _mutate(self, prompt):
+    def _mutate(self, prompt: str) -> str:
         """
         Apply a random mutation to a prompt.
         
