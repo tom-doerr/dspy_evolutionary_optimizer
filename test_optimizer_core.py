@@ -25,10 +25,10 @@ def mock_signature():
     signature.__doc__ = "Given text, generate a label"
     return signature
 
-
-def test_optimizer_initialization(mock_metric):
-    """Test basic optimizer initialization."""
-    optimizer = FullyEvolutionaryPromptOptimizer(
+@pytest.fixture
+def configured_optimizer(mock_metric):
+    """Fixture providing a configured optimizer instance."""
+    return FullyEvolutionaryPromptOptimizer(
         metric=mock_metric,
         generations=5,
         mutation_rate=0.5,
@@ -36,8 +36,11 @@ def test_optimizer_initialization(mock_metric):
         max_population=20,
         debug=True
     )
-    
-    assert optimizer.use_mock is False
+
+
+def test_optimizer_initialization(configured_optimizer):
+    """Test basic optimizer initialization."""
+    assert configured_optimizer.use_mock is False
 
 def test_population_initialization(basic_optimizer):
     """Test that population is initialized correctly."""
