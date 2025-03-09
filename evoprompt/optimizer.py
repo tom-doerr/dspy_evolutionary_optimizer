@@ -104,40 +104,21 @@ class FullyEvolutionaryPromptOptimizer:
                 
         return population
 
-    def _log_progress(self, iteration, population):
-        """Log and display progress information."""
+    def _get_population_stats(self, population):
+        """Calculate population statistics."""
         scores = [p["score"] for p in population if p["score"] is not None]
         if not scores:
-            return
+            return None, None, None
             
         best_score = max(scores)
         avg_score = mean(scores)
-        self.history.append({
-            "iteration": iteration,
-            "best_score": best_score,
-            "avg_score": avg_score,
-            "population_size": len(population),
-            "best_prompt": max(population, key=lambda x: x["score"] if x["score"] is not None else -float('inf'))["prompt"]
-        })
+        best_prompt = max(population, key=lambda x: x["score"] if x["score"] is not None else -float('inf'))["prompt"]
+        return best_score, avg_score, best_prompt
 
-        # Create detailed progress display
-        console = Console()
-
-        # Main progress panel
-        main_panel = Table.grid(padding=(1, 2))
-        main_panel.add_column(justify="left", style="cyan")
-        main_panel.add_column(justify="right", style="magenta")
-
-        # Add current stats
-        main_panel.add_row("Iteration", f"[bold]{iteration}")
-        main_panel.add_row("Best Score", f"[green]{best_score:.3f}")
-        main_panel.add_row("Avg Score", f"[yellow]{avg_score:.3f}")
-        main_panel.add_row("Population", f"[blue]{len(population)}")
-        main_panel.add_row("Inference Calls", f"[cyan]{self.inference_count}/{self.max_inference_calls}")
-
-        # Add progress bar with error handling
+    def _create_progress_bar(self):
+        """Create and return a progress bar with error handling."""
         try:
-            progress = ProgressBar(
+            return ProgressBar(
                 total=self.max_inference_calls,
                 progress=self.inference_count,
                 width=50,
@@ -148,40 +129,69 @@ class FullyEvolutionaryPromptOptimizer:
         except Exception as e:
             if self.debug:
                 print(f"Error creating progress bar: {e}")
-            # Create a simple text-based progress display as fallback
-            progress = f"[Progress: {self.inference_count}/{self.max_inference_calls}]"
+            return f"[Progress: {self.inference_count}/{self.max_inference_calls}]"
 
-        # Best prompt panel
-        current_best = max(population, key=lambda x: x["score"] if x["score"] is not None else -float('inf'))["prompt"]
+    def _create_main_panel(self, iteration, best_score, avg_score, population):
+        """Create the main stats panel."""
+        panel = Table.grid(padding=(1, 2))
+        panel.add_column(justify="left", style="cyan")
+        panel.add_column(justify="right", style="magenta")
+        
+        panel.add_row("Iteration", f"[bold]{iteration}")
+        panel.add_row("Best Score", f"[green]{best_score:.3f}")
+        panel.add_row("Avg Score", f"[yellow]{avg_score:.3f}")
+        panel.add_row("Population", f"[blue]{len(population)}")
+        panel.add_row("Inference Calls", f"[cyan]{self.inference_count}/{self.max_inference_calls}")
+        return panel
+
+    def _create_history_table(self):
+        """Create the recent history table."""
+        table = Table(title="[bold]Recent History", show_header=True, header_style="bold magenta")
+        table.add_column("Iteration", justify="right")
+        table.add_column("Best Score", justify="right")
+        table.add_column("Avg Score", justify="right")
+        table.add_column("Population", justify="right")
+
+        for entry in self.history[-5:]:
+            table.add_row(
+                str(entry['iteration']),
+                f"{entry['best_score']:.3f}",
+                f"{entry['avg_score']:.3f}",
+                str(entry['population_size'])
+            )
+        return table
+
+    def _log_progress(self, iteration, population):
+        """Log and display progress information."""
+        best_score, avg_score, best_prompt = self._get_population_stats(population)
+        if best_score is None:
+            return
+            
+        self.history.append({
+            "iteration": iteration,
+            "best_score": best_score,
+            "avg_score": avg_score,
+            "population_size": len(population),
+            "best_prompt": best_prompt
+        })
+
+        console = Console()
+        progress = self._create_progress_bar()
+        main_panel = self._create_main_panel(iteration, best_score, avg_score, population)
+        history_table = self._create_history_table()
+
         prompt_panel = Panel(
-            current_best,
+            best_prompt,
             title="[bold]Best Prompt",
             border_style="blue",
             padding=(1, 2),
             width=80
         )
 
-        # Recent history table
-        history_table = Table(title="[bold]Recent History", show_header=True, header_style="bold magenta")
-        history_table.add_column("Iteration", justify="right")
-        history_table.add_column("Best Score", justify="right")
-        history_table.add_column("Avg Score", justify="right")
-        history_table.add_column("Population", justify="right")
-
-        for entry in self.history[-5:]:
-            history_table.add_row(
-                str(entry['iteration']),
-                f"{entry['best_score']:.3f}",
-                f"{entry['avg_score']:.3f}",
-                str(entry['population_size'])
-            )
-
-        # Create the layout components
         layout_components = [main_panel, prompt_panel, history_table]
         if progress is not None:
             layout_components.insert(1, progress)
             
-        # Layout the panels
         try:
             console.print(Panel(
                 Group(*layout_components),
@@ -193,14 +203,12 @@ class FullyEvolutionaryPromptOptimizer:
         except Exception as e:
             if self.debug:
                 print(f"Error rendering progress display: {e}")
-            # Fallback to simple text output
             console.print(f"[bold]Generation {iteration}")
             console.print(f"Best Score: {best_score:.3f}")
             console.print(f"Avg Score: {avg_score:.3f}")
             console.print(f"Population: {len(population)}")
             console.print(f"Inference Calls: {self.inference_count}/{self.max_inference_calls}")
 
-        # Add some spacing
         console.print()
 
     def _initialize_population(self):
