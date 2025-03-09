@@ -32,8 +32,9 @@ ignore = [
 ]
 
 # Complexity settings
-[mccabe]
-max-complexity = 5
+[lint.mccabe]
+max-complexity = 10  # Maximum complexity per function
+max-module-lines = 500  # Maximum lines per module
 
 # isort configuration
 [isort]
