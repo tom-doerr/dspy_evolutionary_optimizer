@@ -47,6 +47,7 @@ def main() -> None:
         mutation_rate=0.7,  # Increased for more exploration
         growth_rate=0.4,  # Increased for more population diversity
         max_population=10,  # Limit population size to prevent exponential growth
+        max_workers=4,  # Use 4 parallel workers
         debug=True,  # Enable debug logging
         use_mock=True  # Use mock mode for testing
     )

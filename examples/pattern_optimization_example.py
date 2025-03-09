@@ -60,6 +60,7 @@ def _create_optimizer() -> FullyEvolutionaryPromptOptimizer:
         growth_rate=0.5,
         max_population=100,
         max_inference_calls=200,
+        max_workers=4,  # Use 4 parallel workers
         debug=True,
         use_mock=False
     )
