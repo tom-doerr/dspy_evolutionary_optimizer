@@ -12,9 +12,9 @@ def main():
     # Use a direct model configuration to ensure we're actually calling the API
     lm = dspy.LM('openrouter/google/gemini-2.0-flash-001')
     
-    # Explicitly disable caching and configure tracing to see what's happening
-    dspy.settings.configure(lm=lm, cache=False, trace=True)
-    print("DSPy settings - Cache:", dspy.settings.cache, "Trace:", dspy.settings.trace)
+    # Explicitly disable caching but don't enable tracing (causing errors)
+    dspy.settings.configure(lm=lm, cache=False)
+    print("DSPy settings - Cache:", dspy.settings.cache)
     
     # Force a test call to the model to verify connectivity
     try:
@@ -50,7 +50,8 @@ def main():
         mutation_rate=0.7,  # Increased for more exploration
         growth_rate=0.5,  # Increased for more population diversity
         max_population=30,  # Limit population size to prevent exponential growth
-        debug=True  # Enable debug logging
+        debug=True,  # Enable debug logging
+        use_mock=True  # Use mock mode for testing
     )
     
     optimized_qa_predictor = qa_optimizer.compile(qa_predictor, qa_trainset)
