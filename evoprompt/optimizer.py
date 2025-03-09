@@ -289,23 +289,21 @@ class FullyEvolutionaryPromptOptimizer:
             # Add task-specific instructions
             lambda p: p + " " + random.choice([
                 "Be concise.", "Explain reasoning.", "Be accurate.",
-                "Consider all aspects.", "Focus on key points.", 
-                "Use 'ea' pattern frequently.", "Include words with 'ea'.",
-                "Keep it under 23 characters.", "Be brief.", "Use 'each', 'team', 'reach'."
+                "Consider all aspects.", "Focus on key points.",
+                "Be specific.", "Be brief.", "Be clear.",
+                "Provide details.", "Be precise."
             ]),
             
-            # Add pattern-specific instructions
+            # Add general quality instructions
             lambda p: p + " " + random.choice([
-                "Use words like 'team', 'reach', 'beach', 'each'.",
-                "Include 'ea' combinations frequently.",
-                "Keep response under 23 characters.",
-                "Use words: team, reach, teach, peace, meal, deal.",
-                "Start with 'The team reached...'",
-                "Begin with 'Each person...'",
+                "Ensure high quality.", "Maximize accuracy.",
+                "Optimize for clarity.", "Be comprehensive yet concise.",
+                "Focus on relevance.", "Prioritize correctness.",
+                "Maintain consistency.", "Aim for completeness."
             ]),
             
             # Character-level mutations (limited to avoid breaking placeholders)
-            lambda p: p.replace(" ", " " + random.choice(["", "", "", "really ", "carefully ", "properly ", "each "]))
+            lambda p: p.replace(" ", " " + random.choice(["", "", "", "really ", "carefully ", "properly ", "thoroughly "]))
         ]
         
         # Apply 1-2 mutations

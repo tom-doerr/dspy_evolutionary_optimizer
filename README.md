@@ -95,17 +95,17 @@ trainset = [
     dspy.Example(prompt="Describe a meal you enjoyed.", text="I ate a great meal yesterday."),
 ]
 
-# Define a metric function that counts 'ea' patterns in first 23 chars and penalizes length
+# Define a metric function that counts 'a' after 'e' in first 23 chars and penalizes length
 def pattern_metric(prediction, example):
     text = prediction.text.lower()
     
-    # Count 'ea' patterns within first 23 chars
+    # Count 'a' after 'e' within first 23 chars
     count = 0
     for i in range(min(len(text)-1, 22)):
         if text[i] == 'e' and text[i+1] == 'a':
             count += 1
     
-    # Penalty for length beyond 23 chars
+    # Penalty for each character beyond 23 chars
     length_penalty = max(0, len(text) - 23)
     
     # Final score: pattern count minus length penalty

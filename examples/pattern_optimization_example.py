@@ -2,7 +2,7 @@
 Example of using the FullyEvolutionaryPromptOptimizer for a pattern optimization task.
 
 This example optimizes for a specific pattern: maximizing occurrences of 'a' after 'e'
-within the first 23 characters, with penalties for longer responses.
+within the first 23 characters, with penalties for each character beyond that limit.
 """
 
 import dspy
@@ -38,11 +38,11 @@ def main():
         dspy.Example(prompt="Mention something about weather.", text="The weather is really nice today."),
     ]
     
-    # Define a metric function that counts 'ea' patterns in first 23 chars and penalizes length
+    # Define a metric function that counts 'a' after 'e' in first 23 chars and penalizes length
     def pattern_metric(prediction, example):
         text = prediction.text.lower()
         
-        # Count 'ea' patterns within first 23 chars
+        # Count 'a' after 'e' within first 23 chars
         count = 0
         for i in range(min(len(text)-1, 22)):  # -1 to avoid index error, 22 to stay within 23 chars
             if text[i] == 'e' and text[i+1] == 'a':
@@ -55,7 +55,7 @@ def main():
         score = max(0, count - length_penalty * 0.1)
         
         if count > 0:
-            print(f"Found {count} 'ea' patterns in '{text[:23]}...' (len={len(text)}, penalty={length_penalty})")
+            print(f"Found {count} 'e->a' patterns in '{text[:23]}...' (len={len(text)}, penalty={length_penalty})")
         
         return score
     
@@ -83,7 +83,7 @@ def main():
     for prompt in test_prompts:
         result = optimized_generator(prompt=prompt).text
         
-        # Count 'ea' patterns in the result
+        # Count 'a' after 'e' patterns in the result
         ea_count = 0
         for i in range(len(result)-1):
             if result[i].lower() == 'e' and result[i+1].lower() == 'a':
@@ -92,8 +92,8 @@ def main():
         print(f"\nPrompt: '{prompt}'")
         print(f"Result: '{result}'")
         print(f"Length: {len(result)} chars")
-        print(f"'ea' patterns: {ea_count}")
-        print(f"'ea' patterns in first 23 chars: {sum(1 for i in range(min(len(result)-1, 22)) if result[i].lower() == 'e' and result[i+1].lower() == 'a')}")
+        print(f"'e->a' patterns: {ea_count}")
+        print(f"'e->a' patterns in first 23 chars: {sum(1 for i in range(min(len(result)-1, 22)) if result[i].lower() == 'e' and result[i+1].lower() == 'a')}")
     
     # Visualize the evolution history
     plot_evolution_history(optimizer.get_history())
