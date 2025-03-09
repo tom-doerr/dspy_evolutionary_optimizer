@@ -1,11 +1,11 @@
-"""
-Debug script to investigate DSPy module structure
+"""Debug script to investigate DSPy module structure
 """
 
-import sys
 import importlib
 import os
 import pkgutil
+import sys
+
 
 def main():
     print("=== DSPy Debug Information ===")
