@@ -3,6 +3,37 @@ name = "dspy_evolutionary_optimizer"
 version = "0.1.0"
 dependencies = [
     "textual>=0.54.0",
-    "dspy>=2.0.0"
+    "dspy>=2.0.0",
+    "pylint>=3.0.0"
+]
+
+[tool.pylint.messages_control]
+max-module-lines = 500
+max-line-length = 88
+
+[tool.pylint.design]
+max-args = 5
+max-locals = 15
+max-statements = 50
+max-branches = 20
+max-returns = 6
+max-attributes = 10
+max-public-methods = 20
+max-parents = 7
+max-branches = 20
+
+[tool.pylint.basic]
+good-names = [
+    "i",
+    "j",
+    "k",
+    "ex",
+    "Run",
+    "_",
+    "e",
+    "f",
+    "x",
+    "y",
+    "z"
 ]
 
