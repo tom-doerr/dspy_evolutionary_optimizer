@@ -14,6 +14,13 @@ def _mock_metric() -> Callable[[Any, Any], float]:
 
     return metric
 
+@pytest.fixture(name="metric_fixture")
+def _metric_fixture() -> Callable[[Any, Any], float]:
+    def metric(_pred: Any, _example: Any) -> float:
+        return 1.0
+
+    return metric
+
 
 @pytest.fixture(name="metric_fixture")
 def _metric_fixture() -> Callable[[Any, Any], float]:
@@ -133,6 +140,32 @@ def _test_parameter_validation_cases(
 
 
 def test_parameter_validation(_metric_fixture: Callable[[Any, Any], float]) -> None:
+    # Test valid parameters
+    optimizer = FullyEvolutionaryPromptOptimizer(
+        metric=_metric_fixture,
+        generations=5,
+        mutation_rate=0.5,
+        growth_rate=0.3,
+        max_population=20,
+        debug=True,
+        use_mock=True
+    )
+    assert optimizer.config.generations == 5
+    assert optimizer.config.mutation_rate == 0.5
+    assert optimizer.config.use_mock is True
+
+    # Test edge cases
+    optimizer = FullyEvolutionaryPromptOptimizer(
+        metric=_metric_fixture,
+        generations=1,
+        mutation_rate=0.0,
+        growth_rate=0.0,
+        max_population=1,
+        debug=False,
+        use_mock=False
+    )
+    assert optimizer.config.generations == 1
+    assert optimizer.config.mutation_rate == 0.0
     # Test valid parameters
     optimizer = FullyEvolutionaryPromptOptimizer(
         metric=_metric_fixture,
