@@ -28,3 +28,14 @@ min-similarity-lines=4
 # Enable complexity metrics
 compute-complexity=yes
 
+# Maintainability Index settings
+min-mi-score=50  # Warn if below 50
+mi-method=all    # Calculate for all code
+
+# Halstead metrics settings
+halstead-operator-count=yes
+halstead-operand-count=yes
+halstead-volume=yes
+halstead-difficulty=yes
+halstead-effort=yes
+
