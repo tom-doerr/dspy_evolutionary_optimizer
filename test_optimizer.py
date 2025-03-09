@@ -44,6 +44,43 @@ class TestFullyEvolutionaryPromptOptimizer:
         assert optimizer.max_inference_calls == 100
         assert optimizer.debug is False
         assert optimizer.use_mock is False
+        assert optimizer.max_workers == 1
+
+    def test_parallel_initialization(self, mock_metric):
+        """Test optimizer initialization with parallel workers."""
+        optimizer = FullyEvolutionaryPromptOptimizer(mock_metric, max_workers=4)
+        assert optimizer.max_workers == 4
+
+    def test_parallel_evaluation(self, simple_program, simple_trainset, mock_metric):
+        """Test parallel evaluation functionality."""
+        optimizer = FullyEvolutionaryPromptOptimizer(
+            mock_metric,
+            max_workers=4,
+            use_mock=True,
+            debug=True
+        )
+        
+        score = optimizer._evaluate(simple_program, "test prompt", simple_trainset)
+        assert isinstance(score, float)
+        assert 0.0 <= score <= 1.0
+
+    def test_parallel_execution(self, simple_program, simple_trainset, mock_metric):
+        """Test parallel execution with multiple workers."""
+        optimizer = FullyEvolutionaryPromptOptimizer(
+            mock_metric,
+            max_workers=4,
+            use_mock=True,
+            debug=True
+        )
+        
+        start_time = time.time()
+        optimized_program = optimizer.compile(simple_program, simple_trainset)
+        elapsed = time.time() - start_time
+        
+        assert optimized_program is not None
+        assert hasattr(optimized_program, 'signature')
+        assert hasattr(optimized_program, 'predict')
+        assert elapsed < 30, f"Test took too long: {elapsed:.1f}s"
 
     def test_mock_mode_initialization(self, mock_metric):
         """Test optimizer initialization with mock mode enabled."""

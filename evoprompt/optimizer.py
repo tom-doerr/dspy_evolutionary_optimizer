@@ -22,7 +22,7 @@ class FullyEvolutionaryPromptOptimizer:
     """
 
     def __init__(self, metric, generations=10, mutation_rate=0.5, growth_rate=0.3, max_population=100,
-                 max_inference_calls=100, debug=False, use_mock=None):
+                 max_inference_calls=100, debug=False, use_mock=None, max_workers=1):
         """Initialize the optimizer.
         
         Args:
@@ -34,7 +34,7 @@ class FullyEvolutionaryPromptOptimizer:
             max_inference_calls: Maximum number of LLM inference calls to make
             debug: Enable debug logging
             use_mock: Force mock mode (True/False) or auto-detect if None
-
+            max_workers: Number of parallel workers for evaluation (1 = serial)
         """
         self.metric = metric
         self.generations = generations
@@ -630,21 +630,51 @@ class FullyEvolutionaryPromptOptimizer:
             
         Returns:
             Average score across all examples
-
         """
         try:
             if self.debug:
                 print(f"\nEvaluating prompt: '{prompt}'")
 
-            predictions = self._make_predictions(program, prompt, trainset)
-            if not predictions:
-                return 0.0
-
-            return self._evaluate_predictions(predictions, trainset)
+            if self.max_workers > 1:
+                return self._parallel_evaluate(program, prompt, trainset)
+            else:
+                predictions = self._make_predictions(program, prompt, trainset)
+                if not predictions:
+                    return 0.0
+                return self._evaluate_predictions(predictions, trainset)
 
         except Exception as e:
             print(f"Evaluation error: {e}")
             return 0.0
+
+    def _parallel_evaluate(self, program, prompt, trainset):
+        """Evaluate prompt using parallel workers."""
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+        
+        predictor = dspy.Predict(program.signature, prompt=prompt)
+        scores = []
+        
+        with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+            futures = []
+            for ex in trainset:
+                input_kwargs = self._get_input_kwargs(program, ex)
+                futures.append(executor.submit(
+                    self._make_single_prediction, 
+                    predictor, 
+                    input_kwargs, 
+                    ex
+                ))
+            
+            for future in as_completed(futures):
+                try:
+                    pred = future.result()
+                    score = self.metric(pred, ex)
+                    scores.append(score)
+                except Exception as e:
+                    print(f"Parallel evaluation error: {e}")
+                    scores.append(0.0)
+        
+        return sum(scores) / len(scores) if scores else 0.0
 
     def _crossover(self, prompt1: str, prompt2: str) -> str:
         """Combine two prompts by splitting at a random point and joining.
