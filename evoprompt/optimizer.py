@@ -3,15 +3,19 @@
 import copy
 import os
 import random
-from statistics import mean
 import time
+from concurrent.futures import as_completed, ThreadPoolExecutor
+from statistics import mean
 
+# Third-party imports
 import dspy
-from evoprompt.chromosome import Chromosome
 from rich.console import Console, Group
 from rich.panel import Panel
 from rich.table import Table
 from textual.widgets import ProgressBar
+
+# Local imports
+from evoprompt.chromosome import Chromosome
 
 
 class FullyEvolutionaryPromptOptimizer:
