@@ -65,8 +65,15 @@ class FullyEvolutionaryPromptOptimizer:
         # Start with a single seed prompt
         population = [{"prompt": "{{input}} {{output}}", "score": None}]
         
-        # Evolve all prompts over generations
-        for generation in range(self.generations):
+        # Evolve after each example
+        for example_idx, example in enumerate(trainset):
+            # Evaluate current population on this example
+            for chromosome in population:
+                if chromosome["score"] is None:
+                    chromosome["score"] = self._evaluate(program, chromosome["prompt"], [example])
+            
+            # Evolve population after each example
+            generation = example_idx + 1
             # Evaluate all prompts that need scoring
             for chromosome in population:
                 if chromosome["score"] is None:
@@ -78,9 +85,9 @@ class FullyEvolutionaryPromptOptimizer:
             avg_score = mean(scores) if scores else 0.0
             population_size = len(population)
             
-            # Log stats for this generation
+            # Log stats for this example
             self.history.append({
-                "generation": generation + 1,
+                "generation": generation,
                 "best_score": best_score,
                 "avg_score": avg_score,
                 "population_size": population_size,
@@ -88,7 +95,7 @@ class FullyEvolutionaryPromptOptimizer:
             })
             
             # Report progress
-            print(f"Generation {generation + 1}: Best Score = {best_score:.3f}, "
+            print(f"Example {generation}/{len(trainset)}: Best Score = {best_score:.3f}, "
                   f"Avg Score = {avg_score:.3f}, Population Size = {population_size}")
             
             # Evolve all prompts
