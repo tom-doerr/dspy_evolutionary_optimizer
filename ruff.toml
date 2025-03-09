@@ -61,12 +61,8 @@ order-by-type = false
 lines-after-imports = 2
 lines-between-types = 1
 
-[mccabe]
-max-complexity = 5  # McCabe cyclomatic complexity
-
-# Removed redundant pylint settings since we're using Ruff's built-in complexity checks
-
-# Enable additional Ruff-specific rules
+# Ruff-specific rules
+[ruff]
 allow-star-arg-unpacking = false
 check-builtin-shadowing = true
 check-typed-exception = true
