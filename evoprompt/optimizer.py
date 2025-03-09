@@ -56,7 +56,7 @@ class FullyEvolutionaryPromptOptimizer:
 
     def compile(self, program, trainset):
         """
-        Evolve prompts over multiple generations to optimize the given metric.
+        Evolve prompts using continuous probabilistic selection and mating.
         
         Args:
             program: DSPy program to optimize
@@ -66,81 +66,98 @@ class FullyEvolutionaryPromptOptimizer:
             A DSPy Predict module with the optimized prompt
         """
         # Start with a single seed prompt
-        population = [{"prompt": "{{input}} {{output}}", "score": None}]
+        population = [{"prompt": "{{input}} {{output}}", "score": None, "last_used": 0}]
+        recent_scores = []  # Track recent scores for percentile calculation
+        iteration = 0
         
-        # Evolve after each example
-        for example_idx, example in enumerate(trainset):
-            # Evaluate current population on this example
-            for chromosome in population:
-                if chromosome["score"] is None:
-                    chromosome["score"] = self._evaluate(program, chromosome["prompt"], [example])
+        # Keep evolving until we hit inference limit or complete all examples
+        while self.inference_count < self.max_inference_calls or self.max_inference_calls <= 0:
+            iteration += 1
             
-            # Evolve population after each example
-            generation = example_idx + 1
-            # Evaluate all prompts that need scoring
-            for chromosome in population:
-                if chromosome["score"] is None:
-                    chromosome["score"] = self._evaluate(program, chromosome["prompt"], trainset)
-            
-            # Collect numeric feedback
-            scores = [c["score"] for c in population]
-            best_score = max(scores) if scores else 0.0
-            avg_score = mean(scores) if scores else 0.0
-            population_size = len(population)
-            
-            # Log stats for this example
-            self.history.append({
-                "generation": generation,
-                "best_score": best_score,
-                "avg_score": avg_score,
-                "population_size": population_size,
-                "best_prompt": max(population, key=lambda x: x["score"])["prompt"]
-            })
-            
-            # Report progress
-            print(f"Example {generation}/{len(trainset)}: Best Score = {best_score:.3f}, "
-                  f"Avg Score = {avg_score:.3f}, Population Size = {population_size}")
-            
-            # Evolve all prompts
-            new_population = []
-            for chromosome in population:
-                new_population.append(chromosome)  # Keep original
-                
-                # Mutation: evolve this prompt
-                if random.random() < self.mutation_rate:
-                    mutated = self._mutate(chromosome["prompt"])
-                    new_population.append({"prompt": mutated, "score": None})
-                
-                # Growth: spawn new variants based on performance
-                # Use normalized score between 0 and 1
-                min_score = min(scores) if scores else 0
-                max_score = max(scores) if scores else 1
+            # Select a prompt probabilistically based on score
+            scored_population = [p for p in population if p["score"] is not None]
+            if not scored_population:
+                # If no scored prompts, pick randomly
+                selected = random.choice(population)
+            else:
+                # Calculate selection probabilities based on normalized scores
+                scores = [p["score"] for p in scored_population]
+                min_score = min(scores)
+                max_score = max(scores)
                 if max_score == min_score:
-                    normalized_score = 0.5  # Default if all scores are equal
+                    # All scores equal, pick randomly
+                    selected = random.choice(scored_population)
                 else:
-                    normalized_score = (chromosome["score"] - min_score) / (max_score - min_score)
+                    # Normalize scores and calculate probabilities
+                    normalized_scores = [(s - min_score) / (max_score - min_score) for s in scores]
+                    total = sum(normalized_scores)
+                    probs = [s / total for s in normalized_scores]
+                    selected = random.choices(scored_population, weights=probs, k=1)[0]
+            
+            # Evaluate the selected prompt on a random example
+            example = random.choice(trainset)
+            selected["score"] = self._evaluate(program, selected["prompt"], [example])
+            selected["last_used"] = iteration
+            recent_scores.append(selected["score"])
+            
+            # Keep recent scores window (last 20 scores)
+            if len(recent_scores) > 20:
+                recent_scores.pop(0)
+            
+            # Calculate recent score thresholds
+            if recent_scores:
+                recent_scores_sorted = sorted(recent_scores)
+                top_20_percentile = recent_scores_sorted[int(len(recent_scores_sorted) * 0.8)]
+            else:
+                top_20_percentile = 0
+            
+            # If this score is in top 20%, mate it with another high performer
+            if selected["score"] >= top_20_percentile:
+                # Find another high performer to mate with
+                high_performers = [p for p in population 
+                                 if p["score"] is not None 
+                                 and p["score"] >= top_20_percentile
+                                 and p != selected]
                 
-                if random.random() < self.growth_rate * normalized_score:
-                    crossed = self._crossover(chromosome["prompt"], random.choice(population)["prompt"])
-                    new_population.append({"prompt": crossed, "score": None})
+                if high_performers:
+                    mate = random.choice(high_performers)
+                    new_prompt = self._crossover(selected["prompt"], mate["prompt"])
+                    population.append({"prompt": new_prompt, "score": None, "last_used": iteration})
             
-            # Always keep evolving by removing worst performers
-            # First evaluate any unscored chromosomes
-            for chromosome in new_population:
-                if chromosome["score"] is None:
-                    chromosome["score"] = self._evaluate(program, chromosome["prompt"], trainset)
+            # Apply mutation to selected prompt
+            if random.random() < self.mutation_rate:
+                mutated = self._mutate(selected["prompt"])
+                population.append({"prompt": mutated, "score": None, "last_used": iteration})
             
-            # Sort entire population by score (best first)
-            new_population.sort(key=lambda x: x["score"], reverse=True)
+            # Remove stale prompts (not used in last 10 iterations)
+            population = [p for p in population 
+                         if iteration - p["last_used"] < 10 
+                         or p["score"] is None]
             
-            # Keep top performers but ensure some diversity
-            # Keep at least 25% of population as lower scoring variants
-            keep_count = min(len(new_population), self.max_population)
-            min_diverse = max(2, int(keep_count * 0.25))  # At least 2 and 25% of population
+            # Enforce population size limit
+            if len(population) > self.max_population:
+                # Remove lowest scoring prompts first
+                scored_population = [p for p in population if p["score"] is not None]
+                if len(scored_population) > self.max_population:
+                    scored_population.sort(key=lambda x: x["score"])
+                    population = scored_population[-self.max_population:]
             
-            # Keep best performers plus some diverse lower scoring ones
-            population = new_population[:keep_count - min_diverse] + \
-                        random.sample(new_population[keep_count - min_diverse:], min_diverse)
+            # Log progress periodically
+            if iteration % 10 == 0:
+                scores = [p["score"] for p in population if p["score"] is not None]
+                if scores:
+                    best_score = max(scores)
+                    avg_score = mean(scores)
+                    self.history.append({
+                        "iteration": iteration,
+                        "best_score": best_score,
+                        "avg_score": avg_score,
+                        "population_size": len(population),
+                        "best_prompt": max(population, key=lambda x: x["score"] if x["score"] is not None else -float('inf'))["prompt"]
+                    })
+                    
+                    print(f"Iteration {iteration}: Best Score = {best_score:.3f}, "
+                          f"Avg Score = {avg_score:.3f}, Population Size = {len(population)}")
         
         # Make sure all chromosomes are evaluated before sorting
         for chromosome in population:
