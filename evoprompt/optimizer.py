@@ -15,7 +15,26 @@ from rich.table import Table
 from textual.widgets import ProgressBar
 
 # Local imports
+from dataclasses import dataclass
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from evoprompt.chromosome import Chromosome
+
+
+@dataclass
+class OptimizerConfig:
+    metric: callable
+    generations: int = 10
+    mutation_rate: float = 0.5
+    growth_rate: float = 0.3
+    max_population: int = 100
+    max_workers: int = 1
+    debug: bool = False
+    max_inference_calls: int = 100
+
+
+@dataclass 
+class OptimizerState:
+    inference_count: int = 0
 
 
 class FullyEvolutionaryPromptOptimizer:
@@ -27,8 +46,21 @@ class FullyEvolutionaryPromptOptimizer:
     - Logging evolution history
     """
 
-    def __init__(self, metric, generations=10, mutation_rate=0.5, growth_rate=0.3, max_population=100,
-                 max_inference_calls=100, debug=False, use_mock=None, max_workers=1):
+    def __init__(self, metric, **kwargs):
+        """Initialize the optimizer.
+        
+        Args:
+            metric: Function that evaluates a prediction against an example
+            kwargs: Configuration options including:
+                generations: Number of generations to evolve
+                mutation_rate: Probability of mutating a prompt  
+                growth_rate: Base rate for spawning new variants
+                max_population: Maximum population size
+                max_inference_calls: Maximum LLM inference calls
+                debug: Enable debug logging
+                use_mock: Force mock mode
+                max_workers: Number of parallel workers
+        """
         """Initialize the optimizer.
         
         Args:
@@ -43,18 +75,13 @@ class FullyEvolutionaryPromptOptimizer:
             max_workers: Number of parallel workers for evaluation (1 = serial)
 
         """
-        self.config = OptimizerConfig(
-            metric=metric,
-            generations=generations,
-            mutation_rate=mutation_rate,
-            growth_rate=growth_rate,
-            max_population=max_population,
-            max_workers=max_workers,
-            debug=debug,
-            max_inference_calls=max_inference_calls
-        )
+        self.config = OptimizerConfig(metric=metric, **kwargs)
         self.state = OptimizerState()
-        self.history = []  # Initialize history tracking
+        self.history = []
+        self.population = []
+        self.use_mock = kwargs.get('use_mock')
+        if self.use_mock is None:
+            self.use_mock = os.environ.get('EVOPROMPT_MOCK', 'false').lower() == 'true'
 
         # Determine if we should use mock mode
         if use_mock is None:
@@ -233,14 +260,22 @@ class FullyEvolutionaryPromptOptimizer:
         }]
         return self.population
 
-    def _process_population(self, population_params):
-        """Process one iteration of population evolution."""
-        # Select a prompt probabilistically based on score
-        selected = self._select_prompt(population)
+    def _process_population(self, population, program, trainset, iteration, recent_scores):
+        """Process one iteration of population evolution.
         
-        # Evaluate the selected prompt on a random example
+        Args:
+            population: Current population of prompts
+            program: DSPy program to optimize
+            trainset: Training examples
+            iteration: Current generation number
+            recent_scores: List of recent scores
+            
+        Returns:
+            Updated population and recent_scores
+        """
+        selected = self._select_prompt(population)
         example = random.choice(trainset)
-        selected["score"] = self._evaluate(program, selected["prompt"], [example])
+        selected["score"] = self._evaluate(program, selected["prompt"], [example]) 
         selected["last_used"] = iteration
         recent_scores.append(selected["score"])
 
@@ -352,7 +387,7 @@ class FullyEvolutionaryPromptOptimizer:
                 
         return population
 
-    def _process_generation(self, population, recent_scores, iteration, program, trainset):
+    def _process_generation(self, population, program, trainset, iteration, recent_scores):
         """Process one generation of evolution."""
         # Select a prompt probabilistically based on score
         selected = self._select_prompt(population)
@@ -496,7 +531,7 @@ class FullyEvolutionaryPromptOptimizer:
             try:
                 score = self.metric(pred, ex)
                 scores.append(score)
-            except Exception as e:
+            except (ValueError, TypeError, KeyError) as e:
                 print(f"Error in metric calculation: {e}")
                 scores.append(0.0)
         return scores
