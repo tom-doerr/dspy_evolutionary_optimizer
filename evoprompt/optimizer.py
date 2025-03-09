@@ -17,7 +17,7 @@ class FullyEvolutionaryPromptOptimizer:
     - Logging evolution history
     """
     
-    def __init__(self, metric, generations=10, mutation_rate=0.5, growth_rate=0.3):
+    def __init__(self, metric, generations=10, mutation_rate=0.5, growth_rate=0.3, max_population=100):
         """
         Initialize the optimizer.
         
@@ -26,11 +26,13 @@ class FullyEvolutionaryPromptOptimizer:
             generations: Number of generations to evolve
             mutation_rate: Probability of mutating a prompt
             growth_rate: Base rate for spawning new variants (multiplied by score)
+            max_population: Maximum number of prompts in the population
         """
         self.metric = metric
         self.generations = generations
         self.mutation_rate = mutation_rate
         self.growth_rate = growth_rate
+        self.max_population = max_population
         self.history = []  # Store evolution stats per generation
 
     def compile(self, program, trainset):
@@ -88,7 +90,26 @@ class FullyEvolutionaryPromptOptimizer:
                     crossed = self._crossover(chromosome["prompt"], random.choice(population)["prompt"])
                     new_population.append({"prompt": crossed, "score": None})
             
-            population = new_population
+            # Limit population size by keeping the best performers
+            if len(new_population) > self.max_population:
+                # Sort by score (highest first)
+                scored_population = [p for p in new_population if p["score"] is not None]
+                unscored_population = [p for p in new_population if p["score"] is None]
+                
+                # Sort scored chromosomes by score (descending)
+                scored_population.sort(key=lambda x: x["score"], reverse=True)
+                
+                # Keep the best scored chromosomes and some unscored ones up to max_population
+                remaining_slots = self.max_population - len(scored_population)
+                if remaining_slots > 0:
+                    # Keep some unscored chromosomes for diversity
+                    unscored_to_keep = min(remaining_slots, len(unscored_population))
+                    population = scored_population + unscored_population[:unscored_to_keep]
+                else:
+                    # If we have more scored chromosomes than max_population, keep only the best
+                    population = scored_population[:self.max_population]
+            else:
+                population = new_population
         
         # Make sure all chromosomes are evaluated before sorting
         for chromosome in population:

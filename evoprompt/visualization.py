@@ -35,4 +35,5 @@ def plot_evolution_history(history):
     ax2.grid(True)
     
     plt.tight_layout()
-    plt.show()
+    plt.savefig('evolution_history.png')
+    print("Evolution history plot saved to 'evolution_history.png'")

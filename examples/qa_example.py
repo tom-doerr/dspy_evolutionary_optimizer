@@ -36,7 +36,8 @@ def main():
         metric=qa_metric,
         generations=4,  # Reduced for faster testing
         mutation_rate=0.7,  # Increased for more exploration
-        growth_rate=0.5  # Increased for more population diversity
+        growth_rate=0.5,  # Increased for more population diversity
+        max_population=30  # Limit population size to prevent exponential growth
     )
     
     optimized_qa_predictor = qa_optimizer.compile(qa_predictor, qa_trainset)
