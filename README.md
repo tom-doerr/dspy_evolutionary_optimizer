@@ -79,6 +79,47 @@ result = optimized_qa_predictor(question="What's the capital?", context="Brazil"
 print(f"Answer: {result}")
 ```
 
+### Pattern Optimization Example
+
+```python
+import dspy
+from evoprompt import FullyEvolutionaryPromptOptimizer
+
+# Define a text generation task
+signature = dspy.Signature("prompt -> text")
+generator = dspy.Predict(signature)
+
+# Create a training set
+trainset = [
+    dspy.Example(prompt="Write a short sentence about the beach.", text="The beach was peaceful."),
+    dspy.Example(prompt="Describe a meal you enjoyed.", text="I ate a great meal yesterday."),
+]
+
+# Define a metric function that counts 'ea' patterns in first 23 chars and penalizes length
+def pattern_metric(prediction, example):
+    text = prediction.text.lower()
+    
+    # Count 'ea' patterns within first 23 chars
+    count = 0
+    for i in range(min(len(text)-1, 22)):
+        if text[i] == 'e' and text[i+1] == 'a':
+            count += 1
+    
+    # Penalty for length beyond 23 chars
+    length_penalty = max(0, len(text) - 23)
+    
+    # Final score: pattern count minus length penalty
+    return max(0, count - length_penalty * 0.1)
+
+# Create and run the optimizer
+optimizer = FullyEvolutionaryPromptOptimizer(metric=pattern_metric)
+optimized_generator = optimizer.compile(generator, trainset)
+
+# Test the optimized generator
+result = optimized_generator(prompt="Write a short sentence.").text
+print(f"Result: {result}")
+```
+
 ## How It Works
 
 1. **Population Initialization**: Starts with a seed prompt
