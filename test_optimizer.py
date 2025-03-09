@@ -14,6 +14,13 @@ def mock_metric() -> Callable[[Any, Any], float]:
 
     return metric
 
+@pytest.fixture
+def metric_fixture() -> Callable[[Any, Any], float]:
+    def metric(_pred: Any, _example: Any) -> float:
+        return 1.0
+
+    return metric
+
 
 @pytest.fixture(name="basic_optimizer_fixture")
 def basic_optimizer_fixture(
