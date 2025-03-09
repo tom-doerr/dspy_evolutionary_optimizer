@@ -1,11 +1,11 @@
-"""
-Example of using the FullyEvolutionaryPromptOptimizer for a pattern optimization task.
+"""Example of using the FullyEvolutionaryPromptOptimizer for a pattern optimization task.
 
 This example optimizes for a specific pattern: maximizing occurrences of 'a' after 'e'
 within the first 23 characters, with penalties for each character beyond that limit.
 """
 
 import dspy
+
 from evoprompt import FullyEvolutionaryPromptOptimizer
 from evoprompt.visualization import plot_evolution_history
 
