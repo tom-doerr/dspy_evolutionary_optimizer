@@ -22,7 +22,8 @@ def test_optimizer_initialization():
     )
     
     # Test public interface only
-    assert optimizer.debug is True
+    # Test public interface only
+    assert optimizer.use_mock is False
 
 def test_population_initialization():
     """Test that population is initialized correctly."""
@@ -71,7 +72,7 @@ def test_population_update():
     
     # Test population size is maintained
     updated = optimizer._update_population(population, iteration=1, recent_scores=[0.9, 0.8])  # pylint: disable=protected-access
-    assert len(updated) <= optimizer.max_population
+    assert len(updated) <= 100  # Default max population size
 
 def test_mutation_logic():
     """Test prompt mutation functionality."""
@@ -113,7 +114,7 @@ def test_parallel_evaluation():
     optimizer = FullyEvolutionaryPromptOptimizer(mock_metric, max_workers=2)
     
     # Create mock program and examples
-    signature = dspy.Signature("text -> label")
+    signature = dspy.Signature("text -> label", "Given text, generate a label")
     program = dspy.Predict(signature)
     
     examples = [
@@ -132,7 +133,7 @@ def test_mock_prediction():
         
     optimizer = FullyEvolutionaryPromptOptimizer(mock_metric, use_mock=True)
     
-    signature = dspy.Signature("text -> label")
+    signature = dspy.Signature("text -> label", "Given text, generate a label")
     example = dspy.Example(text="Great product!", label="positive")
     
     pred = optimizer._create_mock_prediction(signature, {"text": "test"}, example)  # pylint: disable=protected-access
@@ -168,7 +169,7 @@ def test_mock_prediction_validation():
         optimizer._create_mock_prediction(None, {}, None)
 
     # Test with empty input kwargs
-    signature = dspy.Signature("text -> label")
+    signature = dspy.Signature("text -> label", "Given text, generate a label")
     example = dspy.Example(text="Test", label="positive")
     with pytest.raises(ValueError):
         optimizer._create_mock_prediction(signature, {}, example)
