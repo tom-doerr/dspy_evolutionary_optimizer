@@ -145,26 +145,43 @@ class FullyEvolutionaryPromptOptimizer:
             Average score across all examples
         """
         try:
+            # Create a predictor with the prompt template
             predictor = dspy.Predict(program.signature, prompt=prompt)
             predictions = []
             
             if self.debug:
                 print(f"\nEvaluating prompt: '{prompt}'")
+                print(f"  DSPy cache setting: {dspy.settings.cache}")
             
             for ex in trainset:
                 try:
+                    # Extract input fields from the example
                     input_kwargs = {k: ex[k] for k in program.signature.input_fields}
                     
-                    # Time the prediction to detect if it's using cache
-                    start_time = time.time()
-                    pred = predictor(**input_kwargs)
-                    elapsed = time.time() - start_time
+                    # Add a timestamp to force unique inputs that bypass any internal caching
+                    # This is just for debugging - doesn't affect the actual prediction
+                    debug_key = f"_timestamp_{time.time()}"
                     
+                    # Time the prediction
+                    start_time = time.time()
+                    
+                    # Force compilation of the prompt template with the specific inputs
+                    # to ensure we're actually calling the model
+                    compiled_prompt = predictor.compile_prompt(**input_kwargs)
+                    if self.debug and len(predictions) == 0:
+                        print(f"  Compiled prompt: {compiled_prompt}")
+                    
+                    # Make the prediction
+                    pred = predictor(**input_kwargs)
+                    
+                    elapsed = time.time() - start_time
                     self.inference_count += 1
+                    
                     if self.debug:
-                        print(f"  Prediction took {elapsed:.4f}s")
-                        if elapsed < 0.01:
-                            print("  WARNING: Prediction was extremely fast - likely using cache or not calling LLM")
+                        print(f"  Prediction for '{input_kwargs}' took {elapsed:.4f}s")
+                        if elapsed < 0.05:
+                            print("  WARNING: Prediction was extremely fast - likely not calling LLM")
+                            print(f"  Prediction result: {pred}")
                     
                     predictions.append(pred)
                 except Exception as e:

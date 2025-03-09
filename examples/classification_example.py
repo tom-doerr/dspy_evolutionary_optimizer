@@ -9,11 +9,20 @@ from evoprompt.visualization import plot_evolution_history
 
 def main():
     # Initialize the language model
+    # Use a direct model configuration to ensure we're actually calling the API
     lm = dspy.LM('openrouter/google/gemini-2.0-flash-001')
     
-    # Explicitly disable caching to ensure real inference
-    dspy.settings.configure(lm=lm, cache=False)
-    print("DSPy cache setting:", dspy.settings.cache)
+    # Explicitly disable caching and configure tracing to see what's happening
+    dspy.settings.configure(lm=lm, cache=False, trace=True)
+    print("DSPy settings - Cache:", dspy.settings.cache, "Trace:", dspy.settings.trace)
+    
+    # Force a test call to the model to verify connectivity
+    try:
+        test_result = lm("This is a test call to verify the model is working.")
+        print(f"Test LM call successful. Response length: {len(test_result)}")
+        print(f"Response preview: {test_result[:50]}...")
+    except Exception as e:
+        print(f"ERROR: Test call to language model failed: {e}")
     # Define a simple classification task
     signature = dspy.Signature("text -> label")
     predictor = dspy.Predict(signature)
