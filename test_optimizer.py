@@ -214,7 +214,9 @@ def test_parameter_validation(metric_fixture: Callable[[Any, Any], float]) -> No
     with pytest.raises(TypeError):
         FullyEvolutionaryPromptOptimizer(metric=metric_fixture, debug="not_a_boolean")
     with pytest.raises(TypeError):
-        FullyEvolutionaryPromptOptimizer(metric=metric_fixture, use_mock="not_a_boolean")
+        FullyEvolutionaryPromptOptimizer(
+            metric=metric_fixture, use_mock="not_a_boolean"
+        )
     """Test validation of optimizer parameters."""
     # Test valid parameters
     optimizer = FullyEvolutionaryPromptOptimizer(
