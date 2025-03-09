@@ -81,9 +81,7 @@ class FullyEvolutionaryPromptOptimizer:
         """Update population based on scores and iteration."""
         if recent_scores:
             recent_scores_sorted = sorted(recent_scores)
-            top_20_percentile = recent_scores_sorted[int(len(recent_scores_sorted) * 0.8)]
-        else:
-            top_20_percentile = 0
+            _ = recent_scores_sorted[int(len(recent_scores_sorted) * 0.8)]  # Calculate but don't use percentile
             
         # Remove stale prompts
         population = [p for p in population
@@ -98,6 +96,89 @@ class FullyEvolutionaryPromptOptimizer:
                 population = scored_population[-self.max_population:]
                 
         return population
+
+    def _log_progress(self, iteration, population):
+        """Log and display progress information."""
+        scores = [p["score"] for p in population if p["score"] is not None]
+        if not scores:
+            return
+            
+        best_score = max(scores)
+        avg_score = mean(scores)
+        self.history.append({
+            "iteration": iteration,
+            "best_score": best_score,
+            "avg_score": avg_score,
+            "population_size": len(population),
+            "best_prompt": max(population, key=lambda x: x["score"] if x["score"] is not None else -float('inf'))["prompt"]
+        })
+
+        # Create detailed progress display
+        console = Console()
+
+        # Main progress panel
+        main_panel = Table.grid(padding=(1, 2))
+        main_panel.add_column(justify="left", style="cyan")
+        main_panel.add_column(justify="right", style="magenta")
+
+        # Add current stats
+        main_panel.add_row("Iteration", f"[bold]{iteration}")
+        main_panel.add_row("Best Score", f"[green]{best_score:.3f}")
+        main_panel.add_row("Avg Score", f"[yellow]{avg_score:.3f}")
+        main_panel.add_row("Population", f"[blue]{len(population)}")
+        main_panel.add_row("Inference Calls", f"[cyan]{self.inference_count}/{self.max_inference_calls}")
+
+        # Add progress bar
+        progress = ProgressBar(
+            total=self.max_inference_calls,
+            progress=self.inference_count,
+            width=50,
+            style="green",
+            complete_style="bold white on green",
+            pulse_style="bold white on blue"
+        )
+
+        # Best prompt panel
+        current_best = max(population, key=lambda x: x["score"] if x["score"] is not None else -float('inf'))["prompt"]
+        prompt_panel = Panel(
+            current_best,
+            title="[bold]Best Prompt",
+            border_style="blue",
+            padding=(1, 2),
+            width=80
+        )
+
+        # Recent history table
+        history_table = Table(title="[bold]Recent History", show_header=True, header_style="bold magenta")
+        history_table.add_column("Iteration", justify="right")
+        history_table.add_column("Best Score", justify="right")
+        history_table.add_column("Avg Score", justify="right")
+        history_table.add_column("Population", justify="right")
+
+        for entry in self.history[-5:]:
+            history_table.add_row(
+                str(entry['iteration']),
+                f"{entry['best_score']:.3f}",
+                f"{entry['avg_score']:.3f}",
+                str(entry['population_size'])
+            )
+
+        # Layout the panels
+        console.print(Panel(
+            Group(
+                main_panel,
+                progress,
+                prompt_panel,
+                history_table
+            ),
+            title=f"[bold]Evolution Progress - Generation {iteration}",
+            border_style="green",
+            padding=(1, 2),
+            width=80
+        ))
+
+        # Add some spacing
+        console.print()
 
     def compile(self, program, trainset):
         """
@@ -335,6 +416,27 @@ class FullyEvolutionaryPromptOptimizer:
                 print(f"Error in metric calculation: {e}")
                 scores.append(0.0)
         return scores
+
+    def _handle_prediction_error(self, e):
+        """Handle prediction errors and return appropriate score."""
+        print(f"Error during prediction: {e}")
+        return 0.0  # Return low score for failed predictions
+
+    def _evaluate_predictions(self, predictions, trainset):
+        """Calculate average score for predictions."""
+        if not predictions:
+            return 0.0
+
+        scores = []
+        for pred, ex in zip(predictions, trainset):
+            try:
+                score = self.metric(pred, ex)
+                scores.append(score)
+            except Exception as e:
+                print(f"Error in metric calculation: {e}")
+                scores.append(0.0)
+
+        return sum(scores) / len(scores) if scores else 0.0
 
     def _evaluate(self, program, prompt, trainset):
         """
