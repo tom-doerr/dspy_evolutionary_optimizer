@@ -15,7 +15,7 @@ def mock_metric() -> Callable[[Any, Any], float]:
     return metric
 
 
-def test_parallel_evaluation(mock_metric: Callable[[Any, Any], float]) -> None:
+def test_parallel_evaluation(_mock_metric: Callable[[Any, Any], float]) -> None:
     # Test normal case
     optimizer = FullyEvolutionaryPromptOptimizer(metric=mock_metric, max_workers=2)
     signature = dspy.Signature("text -> label")
@@ -53,7 +53,7 @@ def test_parallel_evaluation(mock_metric: Callable[[Any, Any], float]) -> None:
     assert 0 <= score <= 1.0
 
 
-def test_mock_prediction(mock_metric: Callable[[Any, Any], float]) -> None:
+def test_mock_prediction(_mock_metric: Callable[[Any, Any], float]) -> None:
     # Test basic mock prediction
     optimizer = FullyEvolutionaryPromptOptimizer(metric=mock_metric)
     optimizer.config.use_mock = True  # Set mock mode through config
@@ -104,16 +104,44 @@ def test_evolution_history(mock_metric: Callable[[Any, Any], float]) -> None:
 
     optimizer.history = [{"iteration": 1, "best_score": 0.9, "population_size": 10}]
     optimizer.history = [{"iteration": 1, "best_score": 0.9, "population_size": 10}]
+    optimizer.history = [{"iteration": 1, "best_score": 0.9, "population_size": 10}]
     history = optimizer.get_history()
     assert len(history) == 1
+    assert "iteration" in history[0]
+    assert "best_score" in history[0]
+    assert "population_size" in history[0]
     assert "iteration" in history[0]
     assert "best_score" in history[0]
     assert "population_size" in history[0]
 
 
 def test_parallel_execution_edge_cases(
-    mock_metric: Callable[[Any, Any], float],
+    _mock_metric: Callable[[Any, Any], float],
 ) -> None:
+    """Test edge cases in parallel execution."""
+    optimizer = FullyEvolutionaryPromptOptimizer(metric=_mock_metric, max_workers=2)
+
+    # Test empty examples
+    signature = dspy.Signature("text -> label", "Given text, generate a label")
+    program = dspy.Predict(signature)
+    with pytest.raises(ValueError, match="Cannot evaluate empty examples"):
+        optimizer._evaluate(program, Chromosome(), [])
+
+    # Test invalid program
+    with pytest.raises(TypeError):
+        optimizer._evaluate(
+            None, Chromosome(), [dspy.Example(text="test", label="test")]
+        )
+
+    # Test invalid chromosome
+    with pytest.raises(TypeError):
+        optimizer._evaluate(
+            program, None, [dspy.Example(text="test", label="test")]
+        )
+
+    # Test invalid examples type
+    with pytest.raises(TypeError):
+        optimizer._evaluate(program, Chromosome(), "not a list")
     optimizer = FullyEvolutionaryPromptOptimizer(metric=mock_metric, max_workers=2)
 
     # Test empty examples

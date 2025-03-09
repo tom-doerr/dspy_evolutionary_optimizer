@@ -37,7 +37,7 @@ def mock_signature() -> dspy.Signature:
     return signature
 
 
-def test_optimizer_initialization(mock_metric: Callable[[Any, Any], float]) -> None:
+def test_optimizer_initialization(_mock_metric: Callable[[Any, Any], float]) -> None:
     """Test optimizer initialization with various parameters."""
     optimizer = FullyEvolutionaryPromptOptimizer(
         metric=_mock_metric,
@@ -62,7 +62,7 @@ def test_optimizer_initialization(mock_metric: Callable[[Any, Any], float]) -> N
     assert optimizer.state.history is None
 
 
-def test_parallel_initialization(metric_fixture: Callable[[Any, Any], float]) -> None:
+def test_parallel_initialization(_metric_fixture: Callable[[Any, Any], float]) -> None:
     optimizer = FullyEvolutionaryPromptOptimizer(metric=_metric_fixture, max_workers=4)
     assert optimizer.config.max_workers == 4
 
@@ -78,7 +78,7 @@ def test_population_initialization(
     assert population[0]["score"] is None
 
 
-def test_optimizer_with_mock_mode(metric_fixture: Callable[[Any, Any], float]) -> None:
+def test_optimizer_with_mock_mode(_metric_fixture: Callable[[Any, Any], float]) -> None:
     optimizer = FullyEvolutionaryPromptOptimizer(metric=_metric_fixture, use_mock=True)
     assert optimizer.config.use_mock is True
 
@@ -602,7 +602,42 @@ def test_parameter_validation(metric_fixture: Callable[[Any, Any], float]) -> No
         FullyEvolutionaryPromptOptimizer(mock_metric, max_workers=-1)
 
 
-def test_population_handling(metric_fixture: Callable[[Any, Any], float]) -> None:
+def test_population_handling(_metric_fixture: Callable[[Any, Any], float]) -> None:
+    """Test population handling and evolution logic."""
+    optimizer = FullyEvolutionaryPromptOptimizer(metric=_metric_fixture)
+
+    # Test empty population
+    with pytest.raises(ValueError):
+        optimizer._update_population([], iteration=1, recent_scores=[])
+
+    # Test population initialization
+    population = optimizer._initialize_population()
+    assert len(population) == 1
+    assert isinstance(population[0]["chromosome"], Chromosome)
+    assert population[0]["score"] is None
+
+    # Test population update
+    updated = optimizer._update_population(
+        population, iteration=1, recent_scores=[0.9, 0.8]
+    )
+    assert len(updated) <= 100  # Default max population size
+
+    # Test population scoring
+    scored_population = optimizer._select_using_pareto(population)
+    assert len(scored_population) > 0
+    assert all("score" in item for item in scored_population)
+
+    # Test population selection
+    selected = optimizer._select_prompt(population)
+    assert selected is not None
+    assert isinstance(selected, dict)
+    assert "chromosome" in selected
+
+    # Test edge cases
+    with pytest.raises(TypeError):
+        optimizer._update_population(None, iteration=1, recent_scores=[0.9])
+    with pytest.raises(TypeError):
+        optimizer._update_population([{"invalid": "data"}], iteration=1, recent_scores=[0.9])
     """Test population handling and evolution logic."""
     optimizer = FullyEvolutionaryPromptOptimizer(metric=metric_fixture)
 
@@ -694,7 +729,7 @@ def test_population_handling(metric_fixture: Callable[[Any, Any], float]) -> Non
     assert "chromosome" in selected
 
 
-def test_mutation_logic(metric_fixture: Callable[[Any, Any], float]) -> None:
+def test_mutation_logic(_metric_fixture: Callable[[Any, Any], float]) -> None:
     optimizer = FullyEvolutionaryPromptOptimizer(metric=_metric_fixture)
 
     # Test basic mutation
@@ -720,7 +755,7 @@ def test_mutation_logic(metric_fixture: Callable[[Any, Any], float]) -> None:
         optimizer._mutate(None)
 
 
-def test_crossover_logic(metric_fixture: Callable[[Any, Any], float]) -> None:
+def test_crossover_logic(_metric_fixture: Callable[[Any, Any], float]) -> None:
     optimizer = FullyEvolutionaryPromptOptimizer(metric=_metric_fixture)
     p1 = "Given {{input}}, generate {{output}}"
     p2 = "Analyze {{input}} and produce {{output}}"
@@ -730,7 +765,7 @@ def test_crossover_logic(metric_fixture: Callable[[Any, Any], float]) -> None:
     assert len(crossed) > min(len(p1), len(p2))
 
 
-def test_prompt_validation(metric_fixture: Callable[[Any, Any], float]) -> None:
+def test_prompt_validation(_metric_fixture: Callable[[Any, Any], float]) -> None:
     optimizer = FullyEvolutionaryPromptOptimizer(metric=_metric_fixture)
     with pytest.raises(TypeError):
         optimizer._ensure_placeholders(None)
