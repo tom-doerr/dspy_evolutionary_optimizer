@@ -41,4 +41,5 @@ exclude = [
 
 [tool.ruff.isort]
 known-first-party = ["evoprompt"]
-src = ["evoprompt", "examples"]
+sections = ["FUTURE", "STDLIB", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
+default-section = "FIRSTPARTY"
