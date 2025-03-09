@@ -1,1 +1,1 @@
-# This file is no longer needed since we have pyproject.toml
+max-complexity = 10
