@@ -105,11 +105,11 @@ def pattern_metric(prediction, example):
         if text[i] == 'e' and text[i+1] == 'a':
             count += 1
     
-    # Penalty for each character beyond 23 chars
-    length_penalty = max(0, len(text) - 23)
+    # Penalty for each character beyond 23 chars (0.1 points per char)
+    length_penalty = max(0, len(text) - 23) * 0.1
     
-    # Final score: pattern count minus length penalty
-    return max(0, count - length_penalty * 0.1)
+    # Final score: pattern count minus length penalty (can be negative)
+    return count - length_penalty
 
 # Create and run the optimizer
 optimizer = FullyEvolutionaryPromptOptimizer(metric=pattern_metric)

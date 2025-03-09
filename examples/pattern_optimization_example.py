@@ -48,14 +48,13 @@ def main():
             if text[i] == 'e' and text[i+1] == 'a':
                 count += 1
         
-        # Penalty for length beyond 23 chars
+        # Penalty for length beyond 23 chars (1 point per extra char)
         length_penalty = max(0, len(text) - 23)
         
         # Final score: pattern count minus length penalty
-        score = max(0, count - length_penalty * 0.1)
+        score = count - length_penalty * 0.1
         
-        if count > 0:
-            print(f"Found {count} 'e->a' patterns in '{text[:23]}...' (len={len(text)}, penalty={length_penalty})")
+        print(f"Text: '{text[:30]}...' | Length: {len(text)} | 'e->a' count: {count} | Penalty: {length_penalty * 0.1:.1f} | Score: {score:.1f}")
         
         return score
     
@@ -64,7 +63,7 @@ def main():
         metric=pattern_metric,
         generations=8,
         mutation_rate=0.8,  # High mutation rate for more exploration
-        growth_rate=0.5,    # Higher growth rate for more population diversity
+        growth_rate=0.3,    # Moderate growth rate for population diversity
         max_population=15,  # Reasonable population size
         debug=True,
         use_mock=False      # Use real LLM calls for this example
@@ -89,11 +88,18 @@ def main():
             if result[i].lower() == 'e' and result[i+1].lower() == 'a':
                 ea_count += 1
         
+        # Calculate the same score as our metric function
+        ea_count_first_23 = sum(1 for i in range(min(len(result)-1, 22)) if result[i].lower() == 'e' and result[i+1].lower() == 'a')
+        length_penalty = max(0, len(result) - 23) * 0.1
+        final_score = ea_count_first_23 - length_penalty
+        
         print(f"\nPrompt: '{prompt}'")
         print(f"Result: '{result}'")
         print(f"Length: {len(result)} chars")
-        print(f"'e->a' patterns: {ea_count}")
-        print(f"'e->a' patterns in first 23 chars: {sum(1 for i in range(min(len(result)-1, 22)) if result[i].lower() == 'e' and result[i+1].lower() == 'a')}")
+        print(f"'e->a' patterns total: {ea_count}")
+        print(f"'e->a' patterns in first 23 chars: {ea_count_first_23}")
+        print(f"Length penalty: {length_penalty:.1f}")
+        print(f"Final score: {final_score:.1f}")
     
     # Visualize the evolution history
     plot_evolution_history(optimizer.get_history())

@@ -74,8 +74,8 @@ class FullyEvolutionaryPromptOptimizer:
             
             # Collect numeric feedback
             scores = [c["score"] for c in population]
-            best_score = max(scores)
-            avg_score = mean(scores)
+            best_score = max(scores) if scores else 0.0
+            avg_score = mean(scores) if scores else 0.0
             population_size = len(population)
             
             # Log stats for this generation
@@ -102,7 +102,9 @@ class FullyEvolutionaryPromptOptimizer:
                     new_population.append({"prompt": mutated, "score": None})
                 
                 # Growth: spawn new variants based on performance
-                if random.random() < self.growth_rate * chromosome["score"]:
+                # Use normalized score (ensure it's positive for growth rate calculation)
+                normalized_score = max(0.1, chromosome["score"] + 10)  # Add offset to handle negative scores
+                if random.random() < self.growth_rate * normalized_score / 10:  # Scale back to reasonable range
                     crossed = self._crossover(chromosome["prompt"], random.choice(population)["prompt"])
                     new_population.append({"prompt": crossed, "score": None})
             
