@@ -1,7 +1,6 @@
 """Core implementation of the evolutionary prompt optimizer."""
 
 import copy
-import os
 import random
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -67,7 +66,7 @@ class FullyEvolutionaryPromptOptimizer:
         self.history = []
         self.population = []
 
-        if self.use_mock and self.debug:
+        if self.config.use_mock and self.config.debug:
             print("MOCK MODE ENABLED: Using simulated responses instead of real LLM calls")
 
     def _select_prompt(self, population: List[Dict[str, Any]]) -> Dict[str, Any]:
@@ -185,8 +184,8 @@ class FullyEvolutionaryPromptOptimizer:
         try:
             return ProgressBar(
                 total=self.config.max_inference_calls,
-                progress=self.state.inference_count,
-                bar_width=50
+                completed=self.state.inference_count,
+                width=50
             )
         except (ValueError, TypeError, AttributeError) as e:
             if self.debug:
@@ -287,7 +286,7 @@ class FullyEvolutionaryPromptOptimizer:
         }]
         return self.population
 
-    def _process_population(self, *, population, program, trainset, iteration, recent_scores):
+    def _process_population(self, *, population, program, trainset, iteration, recent_scores, **kwargs):
         """Process one iteration of population evolution.
         
         Args:
@@ -640,7 +639,7 @@ class FullyEvolutionaryPromptOptimizer:
                 input_kwargs = self._get_input_kwargs(program, ex)
                 pred = self._make_single_prediction(predictor, input_kwargs, ex)
                 predictions.append(pred)
-            except Exception as e:
+            except (ValueError, TypeError, KeyError) as e:
                 print(f"Error during prediction: {e}")
                 return None
 
@@ -654,7 +653,7 @@ class FullyEvolutionaryPromptOptimizer:
         scores = []
         for pred, ex in zip(predictions, trainset):
             try:
-                score = self.metric(pred, ex)
+                score = self.config.metric(pred, ex)
                 scores.append(score)
             except Exception as e:
                 print(f"Error in metric calculation: {e}")
