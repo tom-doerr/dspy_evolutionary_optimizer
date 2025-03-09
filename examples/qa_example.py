@@ -34,9 +34,9 @@ def main():
     # Create and run the optimizer
     qa_optimizer = FullyEvolutionaryPromptOptimizer(
         metric=qa_metric,
-        generations=8,
-        mutation_rate=0.6,
-        growth_rate=0.4
+        generations=4,  # Reduced for faster testing
+        mutation_rate=0.7,  # Increased for more exploration
+        growth_rate=0.5  # Increased for more population diversity
     )
     
     optimized_qa_predictor = qa_optimizer.compile(qa_predictor, qa_trainset)

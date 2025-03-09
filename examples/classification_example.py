@@ -31,9 +31,9 @@ def main():
     # Create and run the optimizer
     optimizer = FullyEvolutionaryPromptOptimizer(
         metric=accuracy_metric,
-        generations=10,
-        mutation_rate=0.5,
-        growth_rate=0.3
+        generations=5,  # Reduced for faster testing
+        mutation_rate=0.7,  # Increased for more exploration
+        growth_rate=0.4  # Increased for more population diversity
     )
     
     optimized_predictor = optimizer.compile(predictor, trainset)

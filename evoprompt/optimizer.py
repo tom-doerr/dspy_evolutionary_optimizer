@@ -91,6 +91,11 @@ class FullyEvolutionaryPromptOptimizer:
             
             population = new_population
         
+        # Make sure all chromosomes are evaluated before sorting
+        for chromosome in population:
+            if chromosome["score"] is None:
+                chromosome["score"] = self._evaluate(program, chromosome["prompt"], trainset)
+                
         # Sort by score and return best predictor
         population.sort(key=lambda x: x["score"], reverse=True)
         best_prompt = population[0]["prompt"]
@@ -114,10 +119,36 @@ class FullyEvolutionaryPromptOptimizer:
         Returns:
             Average score across all examples
         """
-        predictor = dspy.Predict(program.signature, prompt=prompt)
-        predictions = [predictor(**{k: ex[k] for k in program.signature.input_fields}) 
-                       for ex in trainset]
-        return sum(self.metric(pred, ex) for pred, ex in zip(predictions, trainset)) / len(trainset)
+        try:
+            predictor = dspy.Predict(program.signature, prompt=prompt)
+            predictions = []
+            
+            for ex in trainset:
+                try:
+                    input_kwargs = {k: ex[k] for k in program.signature.input_fields}
+                    pred = predictor(**input_kwargs)
+                    predictions.append(pred)
+                except Exception as e:
+                    print(f"Error during prediction: {e}")
+                    return 0.0  # Return low score for failed predictions
+            
+            if not predictions:
+                return 0.0
+                
+            scores = []
+            for pred, ex in zip(predictions, trainset):
+                try:
+                    score = self.metric(pred, ex)
+                    scores.append(score)
+                except Exception as e:
+                    print(f"Error in metric calculation: {e}")
+                    scores.append(0.0)
+                    
+            return sum(scores) / len(scores) if scores else 0.0
+            
+        except Exception as e:
+            print(f"Evaluation error: {e}")
+            return 0.0  # Return low score for failed evaluations
 
     def _crossover(self, prompt1, prompt2):
         """
@@ -148,14 +179,55 @@ class FullyEvolutionaryPromptOptimizer:
         Returns:
             A mutated version of the prompt
         """
+        # Ensure input and output placeholders are present
+        if "{{input}}" not in prompt:
+            prompt = prompt.replace("Input:", "{{input}}").replace("Given ", "Given {{input}}")
+            if "{{input}}" not in prompt:
+                prompt = "{{input}} " + prompt
+                
+        if "{{output}}" not in prompt:
+            prompt = prompt.replace("-> ", "-> {{output}}").replace(" result", " {{output}} result")
+            if "{{output}}" not in prompt:
+                prompt = prompt + " {{output}}"
+        
         mutations = [
-            lambda p: p + " " + random.choice(["to", "with", "for", "->"]),
-            lambda p: " ".join(w for w in p.split() if random.random() > 0.2),
-            lambda p: p.replace("{{input}}", random.choice(["Input:", "{{input}} here", "Given {{input}}"])),
-            lambda p: p.replace("{{output}}", random.choice(["-> {{output}}", "{{output}} result", "yields {{output}}"])),
-            lambda p: "".join(c if random.random() > 0.05 else random.choice(string.ascii_letters) for c in p)
+            # Add instructional phrases
+            lambda p: p + " " + random.choice([
+                "to generate", "with details", "for classification", "-> answer", 
+                "analyze and respond", "consider carefully"
+            ]),
+            
+            # Remove some words (but preserve placeholders)
+            lambda p: " ".join(w for w in p.split() if "{{input}}" in w or "{{output}}" in w or random.random() > 0.2),
+            
+            # Enhance input placeholder
+            lambda p: p.replace("{{input}}", random.choice([
+                "Input: {{input}}", "{{input}} here", "Given {{input}}", 
+                "Consider {{input}}", "Analyze {{input}}", "From {{input}}"
+            ])),
+            
+            # Enhance output placeholder
+            lambda p: p.replace("{{output}}", random.choice([
+                "-> {{output}}", "{{output}} result", "yields {{output}}",
+                "produce {{output}}", "return {{output}}", "output: {{output}}"
+            ])),
+            
+            # Add task-specific instructions
+            lambda p: p + " " + random.choice([
+                "Be concise.", "Explain reasoning.", "Be accurate.",
+                "Consider all aspects.", "Focus on key points."
+            ]),
+            
+            # Character-level mutations (limited to avoid breaking placeholders)
+            lambda p: p.replace(" ", " " + random.choice(["", "", "", "really ", "carefully ", "properly "]))
         ]
-        return random.choice(mutations)(prompt)
+        
+        # Apply 1-2 mutations
+        num_mutations = random.randint(1, 2)
+        for _ in range(num_mutations):
+            prompt = random.choice(mutations)(prompt)
+            
+        return prompt
     
     def get_history(self):
         """
