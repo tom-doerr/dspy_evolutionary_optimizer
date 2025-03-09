@@ -1,4 +1,4 @@
-[tool.ruff]
+[lint]
 # Lint rules
 select = [
     "E",   # Pycodestyle errors
@@ -31,11 +31,11 @@ ignore = [
 ]
 
 # Complexity settings
-[tool.ruff.mccabe]
+[mccabe]
 max-complexity = 5
 
 # isort configuration
-[tool.ruff.isort]
+[isort]
 known-first-party = ["evoprompt"]
 combine-as-imports = true
 force-sort-within-sections = true
@@ -44,11 +44,11 @@ lines-after-imports = 2
 lines-between-types = 1
 
 # flake8-bugbear configuration
-[tool.ruff.flake8-bugbear]
+[flake8-bugbear]
 extend-immutable-calls = ["frozenset", "tuple"]
 
 # Formatting settings
-[tool.ruff.format]
+[format]
 line-length = 88
 indent-style = "space"
 indent-width = 4
