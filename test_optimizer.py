@@ -13,7 +13,7 @@ def mock_metric() -> Callable[[Any, Any], float]:
     return metric
 
 @pytest.fixture
-def basic_optimizer(mock_metric: Callable[[Any, Any], float) -> FullyEvolutionaryPromptOptimizer:
+def basic_optimizer(mock_metric: Callable[[Any, Any], float]) -> FullyEvolutionaryPromptOptimizer:
     return FullyEvolutionaryPromptOptimizer(mock_metric)
 
 @pytest.fixture
@@ -46,7 +46,7 @@ def test_optimizer_initialization(mock_metric: Callable[[Any, Any], float]) -> N
     assert optimizer.state.population is None
     assert optimizer.state.history is None
 
-def test_parallel_initialization(mock_metric: Callable[[Any, Any], float) -> None:
+def test_parallel_initialization(mock_metric: Callable[[Any, Any], float]) -> None:
     optimizer = FullyEvolutionaryPromptOptimizer(mock_metric, max_workers=4)
     assert optimizer.max_workers == 4
 
@@ -56,11 +56,52 @@ def test_population_initialization(basic_optimizer: FullyEvolutionaryPromptOptim
     assert isinstance(population[0]["chromosome"], Chromosome)
     assert population[0]["score"] is None
 
-def test_optimizer_with_mock_mode(mock_metric: Callable[[Any, Any], float) -> None:
+def test_optimizer_with_mock_mode(mock_metric: Callable[[Any, Any], float]) -> None:
     optimizer = FullyEvolutionaryPromptOptimizer(mock_metric, use_mock=True)
     assert optimizer.use_mock is True
 
 def test_parameter_validation(mock_metric: Callable[[Any, Any], float]) -> None:
+    # Test invalid metric
+    with pytest.raises(TypeError):
+        FullyEvolutionaryPromptOptimizer("not_a_function")
+
+    # Test invalid generations
+    with pytest.raises(ValueError):
+        FullyEvolutionaryPromptOptimizer(mock_metric, generations=0)
+    with pytest.raises(ValueError):
+        FullyEvolutionaryPromptOptimizer(mock_metric, generations=-1)
+
+    # Test invalid mutation rate
+    with pytest.raises(ValueError):
+        FullyEvolutionaryPromptOptimizer(mock_metric, mutation_rate=1.1)
+    with pytest.raises(ValueError):
+        FullyEvolutionaryPromptOptimizer(mock_metric, mutation_rate=-0.1)
+
+    # Test invalid max workers
+    with pytest.raises(ValueError):
+        FullyEvolutionaryPromptOptimizer(mock_metric, max_workers=0)
+    with pytest.raises(ValueError):
+        FullyEvolutionaryPromptOptimizer(mock_metric, max_workers=-1)
+
+    # Test invalid growth rate
+    with pytest.raises(ValueError):
+        FullyEvolutionaryPromptOptimizer(mock_metric, growth_rate=1.1)
+    with pytest.raises(ValueError):
+        FullyEvolutionaryPromptOptimizer(mock_metric, growth_rate=-0.1)
+
+    # Test invalid max population
+    with pytest.raises(ValueError):
+        FullyEvolutionaryPromptOptimizer(mock_metric, max_population=0)
+    with pytest.raises(ValueError):
+        FullyEvolutionaryPromptOptimizer(mock_metric, max_population=-1)
+
+    # Test invalid debug type
+    with pytest.raises(TypeError):
+        FullyEvolutionaryPromptOptimizer(mock_metric, debug="not_a_boolean")
+
+    # Test invalid use_mock type
+    with pytest.raises(TypeError):
+        FullyEvolutionaryPromptOptimizer(mock_metric, use_mock="not_a_boolean")
     # Test invalid metric
     with pytest.raises(TypeError):
         FullyEvolutionaryPromptOptimizer("not_a_function")
@@ -114,7 +155,7 @@ def test_parameter_validation(mock_metric: Callable[[Any, Any], float]) -> None:
     with pytest.raises(ValueError):
         FullyEvolutionaryPromptOptimizer(mock_metric, max_workers=-1)
 
-def test_population_handling(mock_metric: Callable[[Any, Any], float) -> None:
+def test_population_handling(mock_metric: Callable[[Any, Any], float]) -> None:
     optimizer = FullyEvolutionaryPromptOptimizer(mock_metric)
     
     # Test empty population
@@ -126,7 +167,51 @@ def test_population_handling(mock_metric: Callable[[Any, Any], float) -> None:
     updated = optimizer._update_population(population, iteration=1, recent_scores=[0.9, 0.8])
     assert len(updated) <= 100  # Default max population size
 
-def test_mutation_logic(mock_metric: Callable[[Any, Any], float) -> None:
+    # Test population scoring
+    scored_population = optimizer._select_using_pareto(population)
+    assert len(scored_population) > 0
+    assert all("score" in item for item in scored_population)
+
+    # Test population selection
+    selected = optimizer._select_prompt(population)
+    assert selected is not None
+    assert isinstance(selected, dict)
+    assert "chromosome" in selected
+    optimizer = FullyEvolutionaryPromptOptimizer(mock_metric)
+    
+    # Test empty population
+    with pytest.raises(ValueError):
+        optimizer._update_population([], iteration=1, recent_scores=[])
+
+    # Test population update
+    population = optimizer._initialize_population()
+    updated = optimizer._update_population(population, iteration=1, recent_scores=[0.9, 0.8])
+    assert len(updated) <= 100  # Default max population size
+
+def test_mutation_logic(mock_metric: Callable[[Any, Any], float]) -> None:
+    optimizer = FullyEvolutionaryPromptOptimizer(mock_metric)
+    
+    # Test basic mutation
+    original = "Given {{input}}, generate {{output}}"
+    mutated = optimizer._mutate(original)
+    assert "{{input}}" in mutated
+    assert "{{output}}" in mutated
+    assert len(mutated) > len(original)
+
+    # Test mutation rate extremes
+    optimizer.config.mutation_rate = 0.0
+    no_mutation = optimizer._mutate(original)
+    assert no_mutation == original
+
+    optimizer.config.mutation_rate = 1.0
+    highly_mutated = optimizer._mutate(original)
+    assert len(highly_mutated) > len(original) * 1.5  # Significant growth
+
+    # Test invalid mutation rate handling
+    with pytest.raises(ValueError):
+        optimizer._mutate("")
+    with pytest.raises(TypeError):
+        optimizer._mutate(None)
     optimizer = FullyEvolutionaryPromptOptimizer(mock_metric)
     original = "Given {{input}}, generate {{output}}"
     mutated = optimizer._mutate(original)
@@ -134,7 +219,7 @@ def test_mutation_logic(mock_metric: Callable[[Any, Any], float) -> None:
     assert "{{output}}" in mutated
     assert len(mutated) > len(original)
 
-def test_crossover_logic(mock_metric: Callable[[Any, Any], float) -> None:
+def test_crossover_logic(mock_metric: Callable[[Any, Any], float]) -> None:
     optimizer = FullyEvolutionaryPromptOptimizer(mock_metric)
     p1 = "Given {{input}}, generate {{output}}"
     p2 = "Analyze {{input}} and produce {{output}}"
@@ -143,7 +228,7 @@ def test_crossover_logic(mock_metric: Callable[[Any, Any], float) -> None:
     assert "{{output}}" in crossed
     assert len(crossed) > min(len(p1), len(p2))
 
-def test_prompt_validation(mock_metric: Callable[[Any, Any], float) -> None:
+def test_prompt_validation(mock_metric: Callable[[Any, Any], float]) -> None:
     optimizer = FullyEvolutionaryPromptOptimizer(mock_metric)
     with pytest.raises(TypeError):
         optimizer._ensure_placeholders(None)
