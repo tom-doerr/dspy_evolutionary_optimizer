@@ -10,7 +10,10 @@ from evoprompt.visualization import plot_evolution_history
 def main():
     # Initialize the language model
     lm = dspy.LM('openrouter/google/gemini-2.0-flash-001')
-    dspy.settings.configure(lm=lm)
+    
+    # Explicitly disable caching to ensure real inference
+    dspy.settings.configure(lm=lm, cache=False)
+    print("DSPy cache setting:", dspy.settings.cache)
     # Define a simple QA task
     qa_signature = dspy.Signature("question, context -> answer")
     qa_predictor = dspy.Predict(qa_signature)
@@ -37,7 +40,8 @@ def main():
         generations=4,  # Reduced for faster testing
         mutation_rate=0.7,  # Increased for more exploration
         growth_rate=0.5,  # Increased for more population diversity
-        max_population=30  # Limit population size to prevent exponential growth
+        max_population=30,  # Limit population size to prevent exponential growth
+        debug=True  # Enable debug logging
     )
     
     optimized_qa_predictor = qa_optimizer.compile(qa_predictor, qa_trainset)

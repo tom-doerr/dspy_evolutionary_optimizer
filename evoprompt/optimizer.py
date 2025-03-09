@@ -3,6 +3,7 @@ Core implementation of the evolutionary prompt optimizer.
 """
 
 import random
+import time
 from statistics import mean
 import dspy
 
@@ -17,7 +18,7 @@ class FullyEvolutionaryPromptOptimizer:
     - Logging evolution history
     """
     
-    def __init__(self, metric, generations=10, mutation_rate=0.5, growth_rate=0.3, max_population=100):
+    def __init__(self, metric, generations=10, mutation_rate=0.5, growth_rate=0.3, max_population=100, debug=False):
         """
         Initialize the optimizer.
         
@@ -27,6 +28,7 @@ class FullyEvolutionaryPromptOptimizer:
             mutation_rate: Probability of mutating a prompt
             growth_rate: Base rate for spawning new variants (multiplied by score)
             max_population: Maximum number of prompts in the population
+            debug: Enable debug logging
         """
         self.metric = metric
         self.generations = generations
@@ -34,6 +36,8 @@ class FullyEvolutionaryPromptOptimizer:
         self.growth_rate = growth_rate
         self.max_population = max_population
         self.history = []  # Store evolution stats per generation
+        self.debug = debug
+        self.inference_count = 0
 
     def compile(self, program, trainset):
         """
@@ -125,6 +129,7 @@ class FullyEvolutionaryPromptOptimizer:
                   f"Avg Score = {entry['avg_score']:.3f}, Size = {entry['population_size']}")
         
         print(f"\nBest Prompt: '{best_prompt}'")
+        print(f"Total inference calls: {self.inference_count}")
         return dspy.Predict(program.signature, prompt=best_prompt)
 
     def _evaluate(self, program, prompt, trainset):
@@ -143,10 +148,24 @@ class FullyEvolutionaryPromptOptimizer:
             predictor = dspy.Predict(program.signature, prompt=prompt)
             predictions = []
             
+            if self.debug:
+                print(f"\nEvaluating prompt: '{prompt}'")
+            
             for ex in trainset:
                 try:
                     input_kwargs = {k: ex[k] for k in program.signature.input_fields}
+                    
+                    # Time the prediction to detect if it's using cache
+                    start_time = time.time()
                     pred = predictor(**input_kwargs)
+                    elapsed = time.time() - start_time
+                    
+                    self.inference_count += 1
+                    if self.debug:
+                        print(f"  Prediction took {elapsed:.4f}s")
+                        if elapsed < 0.01:
+                            print("  WARNING: Prediction was extremely fast - likely using cache or not calling LLM")
+                    
                     predictions.append(pred)
                 except Exception as e:
                     print(f"Error during prediction: {e}")
