@@ -15,15 +15,18 @@ def mock_metric() -> Callable[[Any, Any], float]:
     return metric
 
 
-def test_parallel_evaluation(mock_metric: Callable[[Any, Any], float]) -> None:
+def test_parallel_evaluation(_mock_metric: Callable[[Any, Any], float]) -> None:
     # Test normal case
     optimizer = FullyEvolutionaryPromptOptimizer(metric=mock_metric, max_workers=2)
-    signature = dspy.Signature("text -> label", "Given text, generate a label")
+    signature = dspy.Signature("text -> label")
+    signature.__doc__ = "Given text, generate a label"
     program = dspy.Predict(signature)
     examples = [
         dspy.Example(text="Great product!", label="positive"),
         dspy.Example(text="Awful service.", label="negative"),
     ]
+    # Access protected member for testing purposes
+    # pylint: disable=protected-access
     score = optimizer._evaluate(program, Chromosome(), examples)
     assert 0 <= score <= 1.0
 
@@ -50,12 +53,14 @@ def test_parallel_evaluation(mock_metric: Callable[[Any, Any], float]) -> None:
     assert 0 <= score <= 1.0
 
 
-def test_mock_prediction(mock_metric: Callable[[Any, Any], float]) -> None:
+def test_mock_prediction(_mock_metric: Callable[[Any, Any], float]) -> None:
     # Test basic mock prediction
     optimizer = FullyEvolutionaryPromptOptimizer(metric=mock_metric)
     optimizer.config.use_mock = True  # Set mock mode through config
     signature = dspy.Signature("text -> label", "Given text, generate a label")
     example = dspy.Example(text="Great product!", label="positive")
+    # Access protected member for testing purposes
+    # pylint: disable=protected-access
     pred = optimizer._create_mock_prediction(signature, {"text": "test"}, example)
     assert hasattr(pred, "label")
     assert isinstance(pred.label, str)

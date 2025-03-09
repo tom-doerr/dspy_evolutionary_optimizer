@@ -48,7 +48,7 @@ def basic_optimizer_fixture(
 
 @pytest.fixture
 def mock_signature() -> dspy.Signature:
-    signature = dspy.Signature("text -> label")
+    signature = dspy.Signature("text -> label", "Given text, generate a label")
     signature.__doc__ = "Given text, generate a label"
     return signature
 
@@ -86,6 +86,8 @@ def test_parallel_initialization(_metric_fixture: Callable[[Any, Any], float]) -
 def test_population_initialization(
     basic_optimizer_fixture: FullyEvolutionaryPromptOptimizer,
 ) -> None:
+    # Access protected member for testing purposes
+    # pylint: disable=protected-access
     population = basic_optimizer_fixture._initialize_population()
     assert len(population) == 1
     assert isinstance(population[0]["chromosome"], Chromosome)
@@ -183,7 +185,7 @@ def _test_parameter_validation_cases(
         optimizer("not_a_function", use_mock="not_a_boolean")
 
 
-def test_parameter_validation(_metric_fixture: Callable[[Any, Any], float]) -> None:
+def test_parameter_validation(metric_fixture: Callable[[Any, Any], float]) -> None:
     # Test valid parameters
     optimizer = FullyEvolutionaryPromptOptimizer(
         metric=_metric_fixture,
@@ -272,7 +274,7 @@ def test_parameter_validation(_metric_fixture: Callable[[Any, Any], float]) -> N
     assert optimizer.config.mutation_rate == 0.0
     # Test valid parameters
     optimizer = FullyEvolutionaryPromptOptimizer(
-        metric=metric_fixture,
+        metric=metric_fixture,  # pylint: disable=undefined-variable
         generations=5,
         mutation_rate=0.5,
         growth_rate=0.3,
@@ -302,7 +304,7 @@ def test_parameter_validation(_metric_fixture: Callable[[Any, Any], float]) -> N
 
     # Test invalid generations
     with pytest.raises(ValueError):
-        FullyEvolutionaryPromptOptimizer(mock_metric, generations=0)
+        FullyEvolutionaryPromptOptimizer(metric=mock_metric, generations=0)  # pylint: disable=undefined-variable
     with pytest.raises(ValueError):
         FullyEvolutionaryPromptOptimizer(mock_metric, generations=-1)
 
