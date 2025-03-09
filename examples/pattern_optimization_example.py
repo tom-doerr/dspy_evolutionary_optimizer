@@ -10,7 +10,8 @@ from evoprompt import FullyEvolutionaryPromptOptimizer
 from evoprompt.visualization import plot_evolution_history
 
 
-def main():
+def main() -> None:
+    """Run the pattern optimization example using evolutionary prompt optimization."""
     # Initialize the language model
     lm = dspy.LM('openrouter/google/gemini-2.0-flash-001', cache=False, max_tokens=30)
     
