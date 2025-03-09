@@ -7,7 +7,8 @@ import pkgutil
 import sys
 
 
-def main():
+def main() -> None:
+    """Print debug information about DSPy module structure and configuration."""
     print("=== DSPy Debug Information ===")
     
     # Try to import dspy
@@ -95,10 +96,10 @@ def main():
                     module = getattr(dspy, module_name)
                     if hasattr(module, 'LM'):
                         print(f"  Found LM in dspy.{module_name}")
-                except Exception:
-                    pass
-    except:
-        pass
+                except Exception as e:
+                    print(f"Error checking module {module_name}: {e}")
+    except Exception as e:
+        print(f"Error during submodule search: {e}")
 
 if __name__ == "__main__":
     main()
