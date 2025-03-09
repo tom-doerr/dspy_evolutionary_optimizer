@@ -1,9 +1,9 @@
 """Core evolutionary optimization logic."""
 
 from dataclasses import dataclass
-from typing import List, Dict, Any, Callable, Optional
+from statistics import mean
+from typing import List, Dict, Any, Callable
 import random
-import copy
 
 @dataclass
 class OptimizerConfig:
@@ -28,6 +28,10 @@ class EvolutionaryCore:
     def __init__(self, config: OptimizerConfig):
         self.config = config
         self.state = OptimizerState()
+        
+    def get_population_stats(self, population: List[Dict[str, Any]]) -> tuple:
+        """Public method to get population statistics."""
+        return self._get_population_stats(population)
         
     def _select_prompt(self, population: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Select a prompt using Pareto distribution."""

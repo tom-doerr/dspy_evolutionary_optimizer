@@ -1,5 +1,6 @@
 """Visualization utilities for evolutionary optimization."""
 
+from typing import List, Dict, Any
 from rich.console import Console, Group
 from rich.panel import Panel
 from rich.table import Table
@@ -15,11 +16,10 @@ class EvolutionVisualizer:
     def _create_progress_bar(self, inference_count: int, max_inference_calls: int):
         """Create progress bar with error handling."""
         try:
-            return ProgressBar(
-                total=max_inference_calls,
-                completed=inference_count,
-                width=50
-            )
+            progress = ProgressBar(total=max_inference_calls)
+            progress.advance(inference_count)
+            progress.width = 50
+            return progress
         except (ValueError, TypeError, AttributeError) as e:
             if self.debug:
                 print(f"Error creating progress bar: {e}")
@@ -57,7 +57,7 @@ class EvolutionVisualizer:
             )
         return table
 
-    def log_progress(self, iteration: int, population: List[Dict[str, Any]],
+    def log_progress(self, *, iteration: int, population: List[Dict[str, Any]],
                     inference_count: int, max_inference_calls: int,
                     history: List[Dict[str, Any]], best_prompt: str) -> None:
         """Log and display progress information."""
