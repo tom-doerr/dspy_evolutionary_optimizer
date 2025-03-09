@@ -47,9 +47,11 @@ lines-between-types = 1
 [flake8-bugbear]
 extend-immutable-calls = ["frozenset", "tuple"]
 
+# Global settings
+line-length = 88
+
 # Formatting settings
 [format]
-line-length = 88
 indent-style = "space"
 indent-width = 4
 quote-style = "double"
