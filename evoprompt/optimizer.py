@@ -54,6 +54,7 @@ class FullyEvolutionaryPromptOptimizer:
             max_inference_calls=max_inference_calls
         )
         self.state = OptimizerState()
+        self.history = []  # Initialize history tracking
 
         # Determine if we should use mock mode
         if use_mock is None:
@@ -220,8 +221,8 @@ class FullyEvolutionaryPromptOptimizer:
 
     def _initialize_population(self):
         """Initialize the starting population with chromosomes."""
-        base_task = ["Given {{input}},", "generate {{output}}"]
-        base_mutation = ["Be concise.", "Be accurate."]
+        base_task = ["{{input}}", "{{output}}"]
+        base_mutation = []
         
         chromosome = Chromosome(base_task, base_mutation)
         self.population = [{
