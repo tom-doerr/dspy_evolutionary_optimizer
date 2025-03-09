@@ -1,4 +1,6 @@
 [project]
+name = "dspy_evolutionary_optimizer"
+version = "0.1.0"
 dependencies = [
     "textual>=0.54.0",
     "dspy>=2.0.0"
