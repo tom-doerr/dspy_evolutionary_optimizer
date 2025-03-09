@@ -7,24 +7,13 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from statistics import mean
 from dataclasses import dataclass
-from typing import List, Dict, Any, Optional, Callable
-
-@dataclass
-class OptimizerConfig:
-    metric: Callable
-    generations: int
-    mutation_rate: float
-    growth_rate: float
-    max_population: int
-    max_workers: int
-    debug: bool
-    max_inference_calls: int
-
-@dataclass
-class OptimizerState:
-    inference_count: int = 0
-    population: List[Dict[str, Any]] = None
-    history: List[Dict[str, Any]] = None
+from typing import List, Dict, Any, Callable
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import copy
+import os
+import random
+import time
+from statistics import mean
 
 # Third-party imports
 import dspy
@@ -34,14 +23,12 @@ from rich.table import Table
 from textual.widgets import ProgressBar
 
 # Local imports
-from dataclasses import dataclass
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from evoprompt.chromosome import Chromosome
 
 
 @dataclass
 class OptimizerConfig:
-    metric: callable
+    metric: Callable
     generations: int = 10
     mutation_rate: float = 0.5
     growth_rate: float = 0.3
@@ -51,9 +38,11 @@ class OptimizerConfig:
     max_inference_calls: int = 100
 
 
-@dataclass 
+@dataclass
 class OptimizerState:
     inference_count: int = 0
+    population: List[Dict[str, Any]] = None
+    history: List[Dict[str, Any]] = None
 
 
 class FullyEvolutionaryPromptOptimizer:
