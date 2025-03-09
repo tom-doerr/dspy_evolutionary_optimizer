@@ -1,4 +1,5 @@
 # EvolutionaryPromptOptimizer (Work in Progress)
+# pylint: skip-file
 
 ⚠️ This project is currently under active development and should be considered experimental. ⚠️
 
