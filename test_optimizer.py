@@ -2,7 +2,7 @@ import time
 
 import dspy
 import pytest
-from pytest_timeout import timeout
+import pytest_timeout
 
 from evoprompt.optimizer import FullyEvolutionaryPromptOptimizer
 
@@ -46,7 +46,7 @@ class TestFullyEvolutionaryPromptOptimizer:
         optimizer = FullyEvolutionaryPromptOptimizer(mock_metric, use_mock=True)
         assert optimizer.use_mock is True
 
-    @timeout(30)  # 30 second timeout
+    @pytest_timeout.timeout(30)  # 30 second timeout
     def test_compile_basic_functionality(self, simple_program, simple_trainset, mock_metric):
         """Test basic compilation functionality."""
         # Configure mock LM
@@ -70,7 +70,7 @@ class TestFullyEvolutionaryPromptOptimizer:
         assert elapsed < 30, f"Test took too long: {elapsed:.1f}s"
 
     @pytest.mark.integration
-    @timeout(60)  # 60 second timeout for real API calls
+    @pytest_timeout.timeout(60)  # 60 second timeout for real API calls
     def test_real_api_call(self):
         """Test a single real API call to verify connectivity."""
         # Use a minimal configuration
