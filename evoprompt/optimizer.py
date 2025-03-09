@@ -46,6 +46,7 @@ class FullyEvolutionaryPromptOptimizer:
         self.max_population = max_population
         self.max_workers = max_workers
         self.history = []  # Store evolution stats per generation
+        self.population = []  # Initialize population
         self.debug = debug
         self.inference_count = 0
         self.max_inference_calls = max_inference_calls
@@ -221,11 +222,14 @@ class FullyEvolutionaryPromptOptimizer:
         base_task = ["Given {{input}},", "generate {{output}}"]
         base_mutation = ["Be concise.", "Be accurate."]
         
-        return [{
-            "chromosome": Chromosome(base_task, base_mutation),
+        chromosome = Chromosome(base_task, base_mutation)
+        self.population = [{
+            "prompt": chromosome.to_prompt(),
+            "chromosome": chromosome,
             "score": None,
             "last_used": 0
         }]
+        return self.population
 
     def _process_population(self, population, iteration, recent_scores, program, trainset):
         """Process one iteration of population evolution."""
@@ -795,6 +799,9 @@ class FullyEvolutionaryPromptOptimizer:
             A mutated version of the prompt with controlled intensity
 
         """
+        if not hasattr(self, 'population'):
+            self.population = []
+            
         prompt = self._ensure_placeholders(prompt)
         weighted_mutations = self._get_mutations()
         
@@ -803,7 +810,7 @@ class FullyEvolutionaryPromptOptimizer:
         intensity = 1.0 - current_score  # More intense mutations for lower scores
         
         # Apply mutations based on intensity
-        num_mutations = max(1, min(3, int(3 * intensity)))
+        num_mutations = max(1, min(3, int(3 * intensity))
         mutations = [m for _, m in weighted_mutations]
         weights = [w for w, _ in weighted_mutations]
         
