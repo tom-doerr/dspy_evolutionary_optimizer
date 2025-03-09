@@ -1,5 +1,7 @@
 import dspy
 import pytest
+import time
+from pytest_timeout import timeout
 
 from evoprompt.optimizer import FullyEvolutionaryPromptOptimizer
 
@@ -43,20 +45,31 @@ class TestFullyEvolutionaryPromptOptimizer:
         optimizer = FullyEvolutionaryPromptOptimizer(mock_metric, use_mock=True)
         assert optimizer.use_mock is True
 
+    @timeout(30)  # 30 second timeout
     def test_compile_basic_functionality(self, simple_program, simple_trainset, mock_metric):
         """Test basic compilation functionality."""
         # Configure mock LM
         lm = dspy.LM('mock', cache=False)
         dspy.configure(lm=lm)
         
-        optimizer = FullyEvolutionaryPromptOptimizer(mock_metric, max_inference_calls=10, use_mock=True)
+        optimizer = FullyEvolutionaryPromptOptimizer(
+            mock_metric, 
+            max_inference_calls=10, 
+            use_mock=True,
+            debug=True
+        )
+        
+        start_time = time.time()
         optimized_program = optimizer.compile(simple_program, simple_trainset)
+        elapsed = time.time() - start_time
         
         assert optimized_program is not None
         assert hasattr(optimized_program, 'signature')
         assert hasattr(optimized_program, 'predict')
+        assert elapsed < 30, f"Test took too long: {elapsed:.1f}s"
 
     @pytest.mark.integration
+    @timeout(60)  # 60 second timeout for real API calls
     def test_real_api_call(self):
         """Test a single real API call to verify connectivity."""
         # Use a minimal configuration
@@ -71,18 +84,21 @@ class TestFullyEvolutionaryPromptOptimizer:
             metric=lambda pred, ex: 1.0,  # Simple metric
             generations=1,  # Only 1 generation
             max_inference_calls=1,  # Only 1 call
-            use_mock=False
+            use_mock=False,
+            debug=True
         )
         
         # Minimal trainset
         trainset = [dspy.Example(input="test", output="result")]
         
-        # Run optimization
+        start_time = time.time()
         result = optimizer.compile(program, trainset)
+        elapsed = time.time() - start_time
         
         # Basic validation
         assert result is not None
         assert hasattr(result, 'signature')
+        assert elapsed < 60, f"Test took too long: {elapsed:.1f}s"
 
     def test_population_management(self, simple_program, simple_trainset, mock_metric):
         """Test population management and evolution."""
