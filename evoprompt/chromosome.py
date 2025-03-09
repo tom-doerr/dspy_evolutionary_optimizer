@@ -7,6 +7,11 @@ logger = logging.getLogger(__name__)
 class Chromosome:
     """Represents a prompt chromosome with task and mutation parts."""
     
+    def _validate_parts(self) -> None:
+        """Validate that parts are valid strings."""
+        if not all(isinstance(part, str) for part in self.task_parts + self.mutation_parts):
+            raise TypeError("All parts must be strings")
+            
     def __init__(
         self, 
         task_parts: Optional[List[str]] = None,
@@ -42,7 +47,7 @@ class Chromosome:
             new_mutation = self._merge_parts(self.mutation_parts, other.mutation_parts)
             return Chromosome(new_task, new_mutation)
         except Exception as e:
-            logger.error(f"Error combining chromosomes: {e}")
+            logger.error("Error combining chromosomes: %s", e)
             raise ValueError("Failed to combine chromosomes") from e
         
     def _merge_parts(self, parts1, parts2):
@@ -71,7 +76,7 @@ class Chromosome:
                 self.mutation_parts = self._shuffle_parts(self.mutation_parts)
                 self._validate_parts()
             except Exception as e:
-                logger.error(f"Error during mutation: {e}")
+                logger.error("Error during mutation: %s", e)
                 raise ValueError("Failed to mutate chromosome") from e
             
     def _shuffle_parts(self, parts):
