@@ -65,7 +65,7 @@ class FullyEvolutionaryPromptOptimizer:
     - Logging evolution history
     """
 
-    def __init__(self, metric, **kwargs):
+    def __init__(self, metric: Callable, **kwargs):
         """Initialize the optimizer.
         
         Args:
@@ -98,6 +98,12 @@ class FullyEvolutionaryPromptOptimizer:
         self.state = OptimizerState()
         self.history = []
         self.population = []
+        self.inference_count = 0
+        self.max_inference_calls = kwargs.get('max_inference_calls', 100)
+        self.max_population = kwargs.get('max_population', 100)
+        self.mutation_rate = kwargs.get('mutation_rate', 0.5)
+        self.max_workers = kwargs.get('max_workers', 1)
+        self.debug = kwargs.get('debug', False)
         self.use_mock = kwargs.get('use_mock')
         if self.use_mock is None:
             self.use_mock = os.environ.get('EVOPROMPT_MOCK', 'false').lower() == 'true'
