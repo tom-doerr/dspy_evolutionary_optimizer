@@ -1,11 +1,10 @@
-"""
-Core implementation of the evolutionary prompt optimizer.
+"""Core implementation of the evolutionary prompt optimizer.
 """
 
 import os
 import random
-import time
 from statistics import mean
+import time
 
 import dspy
 from rich.console import Console, Group
@@ -15,8 +14,7 @@ from textual.widgets import ProgressBar
 
 
 class FullyEvolutionaryPromptOptimizer:
-    """
-    An optimizer that evolves prompts over generations, providing numeric feedback.
+    """An optimizer that evolves prompts over generations, providing numeric feedback.
     
     This optimizer uses evolutionary algorithms to improve prompts by:
     - Tracking numeric scores for each prompt
@@ -26,8 +24,7 @@ class FullyEvolutionaryPromptOptimizer:
 
     def __init__(self, metric, generations=10, mutation_rate=0.5, growth_rate=0.3, max_population=100,
                  max_inference_calls=100, debug=False, use_mock=None):
-        """
-        Initialize the optimizer.
+        """Initialize the optimizer.
         
         Args:
             metric: Function that evaluates a prediction against an example
@@ -38,6 +35,7 @@ class FullyEvolutionaryPromptOptimizer:
             max_inference_calls: Maximum number of LLM inference calls to make
             debug: Enable debug logging
             use_mock: Force mock mode (True/False) or auto-detect if None
+
         """
         self.metric = metric
         self.generations = generations
@@ -375,8 +373,7 @@ class FullyEvolutionaryPromptOptimizer:
         population.append({"prompt": mutated, "score": None, "last_used": iteration})
 
     def compile(self, program, trainset):
-        """
-        Evolve prompts using continuous probabilistic selection and mating.
+        """Evolve prompts using continuous probabilistic selection and mating.
         
         Args:
             program: DSPy program to optimize
@@ -384,6 +381,7 @@ class FullyEvolutionaryPromptOptimizer:
             
         Returns:
             A DSPy Predict module with the optimized prompt
+
         """
         population, recent_scores, iteration = self._initialize_evolution()
 
@@ -616,8 +614,7 @@ class FullyEvolutionaryPromptOptimizer:
         return sum(scores) / len(scores) if scores else 0.0
 
     def _evaluate(self, program, prompt, trainset):
-        """
-        Evaluate a prompt's performance on the training set.
+        """Evaluate a prompt's performance on the training set.
         
         Args:
             program: DSPy program to evaluate
@@ -626,6 +623,7 @@ class FullyEvolutionaryPromptOptimizer:
             
         Returns:
             Average score across all examples
+
         """
         try:
             if self.debug:
@@ -642,8 +640,7 @@ class FullyEvolutionaryPromptOptimizer:
             return 0.0
 
     def _crossover(self, prompt1: str, prompt2: str) -> str:
-        """
-        Combine two prompts by splitting at a random point and joining.
+        """Combine two prompts by splitting at a random point and joining.
         
         Args:
             prompt1: First parent prompt
@@ -651,6 +648,7 @@ class FullyEvolutionaryPromptOptimizer:
             
         Returns:
             A new prompt created by combining parts of both parents
+
         """
         p1_parts = prompt1.split()
         p2_parts = prompt2.split()
@@ -718,14 +716,14 @@ class FullyEvolutionaryPromptOptimizer:
         ]
 
     def _mutate(self, prompt: str) -> str:
-        """
-        Apply a random mutation to a prompt.
+        """Apply a random mutation to a prompt.
         
         Args:
             prompt: Prompt to mutate
             
         Returns:
             A mutated version of the prompt
+
         """
         prompt = self._ensure_placeholders(prompt)
         mutations = self._get_mutations()
@@ -760,8 +758,7 @@ class FullyEvolutionaryPromptOptimizer:
         return output_values
 
     def _create_mock_prediction(self, signature, input_kwargs, example):
-        """
-        Create a mock prediction that matches the expected output format.
+        """Create a mock prediction that matches the expected output format.
         
         Args:
             signature: DSPy signature defining input/output fields
@@ -770,16 +767,17 @@ class FullyEvolutionaryPromptOptimizer:
             
         Returns:
             A mock prediction object that will pass the metric
+
         """
         MockPrediction = self._create_mock_prediction_class()
         output_values = self._get_output_values(signature, input_kwargs, example)
         return MockPrediction(**output_values)
 
     def get_history(self):
-        """
-        Get the evolution history.
+        """Get the evolution history.
         
         Returns:
             List of dictionaries with statistics for each generation
+
         """
         return self.history

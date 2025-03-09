@@ -245,7 +245,7 @@ class TestFullyEvolutionaryPromptOptimizer:
     def test_mock_prediction(self, simple_program, mock_metric):
         """Test mock prediction creation."""
         optimizer = FullyEvolutionaryPromptOptimizer(
-            mock_metric, 
+            mock_metric,
             use_mock=True,
             debug=True,
             max_inference_calls=1
