@@ -353,7 +353,7 @@ class FullyEvolutionaryPromptOptimizer:
                     # Add progress bar
                     progress = ProgressBar(
                         total=self.max_inference_calls,
-                        value=self.inference_count,
+                        progress=self.inference_count,
                         width=50,
                         style="green",
                         complete_style="bold white on green",
