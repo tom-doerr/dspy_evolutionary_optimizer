@@ -5,15 +5,9 @@ import os
 import random
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from statistics import mean
 from dataclasses import dataclass
-from typing import List, Dict, Any, Callable
-from concurrent.futures import ThreadPoolExecutor, as_completed
-import copy
-import os
-import random
-import time
 from statistics import mean
+from typing import List, Dict, Any, Callable
 
 # Third-party imports
 import dspy
@@ -59,20 +53,6 @@ class FullyEvolutionaryPromptOptimizer:
         
         Args:
             metric: Function that evaluates a prediction against an example
-            kwargs: Configuration options including:
-                generations: Number of generations to evolve
-                mutation_rate: Probability of mutating a prompt  
-                growth_rate: Base rate for spawning new variants
-                max_population: Maximum population size
-                max_inference_calls: Maximum LLM inference calls
-                debug: Enable debug logging
-                use_mock: Force mock mode
-                max_workers: Number of parallel workers
-        """
-        """Initialize the optimizer.
-        
-        Args:
-            metric: Function that evaluates a prediction against an example
             generations: Number of generations to evolve
             mutation_rate: Probability of mutating a prompt
             growth_rate: Base rate for spawning new variants (multiplied by score)
@@ -81,7 +61,6 @@ class FullyEvolutionaryPromptOptimizer:
             debug: Enable debug logging
             use_mock: Force mock mode (True/False) or auto-detect if None
             max_workers: Number of parallel workers for evaluation (1 = serial)
-
         """
         self.config = OptimizerConfig(metric=metric, **kwargs)
         self.state = OptimizerState()
@@ -98,11 +77,9 @@ class FullyEvolutionaryPromptOptimizer:
             self.use_mock = os.environ.get('EVOPROMPT_MOCK', 'false').lower() == 'true'
 
         # Determine if we should use mock mode
-        if use_mock is None:
-            # Auto-detect based on environment variable
+        self.use_mock = kwargs.get('use_mock')
+        if self.use_mock is None:
             self.use_mock = os.environ.get('EVOPROMPT_MOCK', 'false').lower() == 'true'
-        else:
-            self.use_mock = use_mock
 
         if self.use_mock and self.debug:
             print("MOCK MODE ENABLED: Using simulated responses instead of real LLM calls")
@@ -221,8 +198,8 @@ class FullyEvolutionaryPromptOptimizer:
         """Create and return a progress bar with error handling."""
         try:
             return ProgressBar(
-                total=self.max_inference_calls,
-                completed=self.inference_count,
+                total=self.config.max_inference_calls,
+                completed=self.state.inference_count,
                 width=50
             )
         except (ValueError, TypeError, AttributeError) as e:
@@ -299,7 +276,7 @@ class FullyEvolutionaryPromptOptimizer:
                 padding=(1, 2),
                 width=80
             ))
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
             if self.debug:
                 print(f"Error rendering progress display: {e}")
             console.print(f"[bold]Generation {iteration}")
@@ -520,7 +497,7 @@ class FullyEvolutionaryPromptOptimizer:
         while self.inference_count < self.max_inference_calls or self.max_inference_calls <= 0:
             iteration += 1
             population, recent_scores = self._process_generation(
-                population, recent_scores, iteration, program, trainset
+                population, program, trainset, iteration, recent_scores
             )
             
             # Log progress periodically
@@ -593,7 +570,7 @@ class FullyEvolutionaryPromptOptimizer:
         scores = []
         for pred, ex in zip(predictions, trainset):
             try:
-                score = self.metric(pred, ex)
+                score = self.config.metric(pred, ex)
                 scores.append(score)
             except (ValueError, TypeError, KeyError) as e:
                 print(f"Error in metric calculation: {e}")
