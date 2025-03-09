@@ -78,7 +78,7 @@ def test_optimizer_initialization(_mock_metric: Callable[[Any, Any], float]) -> 
 
 
 def test_parallel_initialization(_metric_fixture: Callable[[Any, Any], float]) -> None:
-    optimizer = FullyEvolutionaryPromptOptimizer(metric_fixture, max_workers=4)
+    optimizer = FullyEvolutionaryPromptOptimizer(metric=_metric_fixture, max_workers=4)
     assert optimizer.config.max_workers == 4
 
 
@@ -92,7 +92,7 @@ def test_population_initialization(
 
 
 def test_optimizer_with_mock_mode(_metric_fixture: Callable[[Any, Any], float]) -> None:
-    optimizer = FullyEvolutionaryPromptOptimizer(metric_fixture, use_mock=True)
+    optimizer = FullyEvolutionaryPromptOptimizer(metric=_metric_fixture, use_mock=True)
     assert optimizer.config.use_mock is True
 
 
@@ -138,6 +138,46 @@ def _test_parameter_validation_cases(
     with pytest.raises(TypeError):
         optimizer("not_a_function", use_mock="not_a_boolean")
 
+
+def _test_parameter_validation_cases(optimizer: FullyEvolutionaryPromptOptimizer) -> None:
+    """Test various parameter validation cases."""
+    # Test invalid generations
+    with pytest.raises(ValueError):
+        optimizer("not_a_function", generations=0)
+    with pytest.raises(ValueError):
+        optimizer("not_a_function", generations=-1)
+
+    # Test invalid mutation rate
+    with pytest.raises(ValueError):
+        optimizer("not_a_function", mutation_rate=1.1)
+    with pytest.raises(ValueError):
+        optimizer("not_a_function", mutation_rate=-0.1)
+
+    # Test invalid max workers
+    with pytest.raises(ValueError):
+        optimizer("not_a_function", max_workers=0)
+    with pytest.raises(ValueError):
+        optimizer("not_a_function", max_workers=-1)
+
+    # Test invalid growth rate
+    with pytest.raises(ValueError):
+        optimizer("not_a_function", growth_rate=1.1)
+    with pytest.raises(ValueError):
+        optimizer("not_a_function", growth_rate=-0.1)
+
+    # Test invalid max population
+    with pytest.raises(ValueError):
+        optimizer("not_a_function", max_population=0)
+    with pytest.raises(ValueError):
+        optimizer("not_a_function", max_population=-1)
+
+    # Test invalid debug type
+    with pytest.raises(TypeError):
+        optimizer("not_a_function", debug="not_a_boolean")
+
+    # Test invalid use_mock type
+    with pytest.raises(TypeError):
+        optimizer("not_a_function", use_mock="not_a_boolean")
 
 def test_parameter_validation(_metric_fixture: Callable[[Any, Any], float]) -> None:
     # Test valid parameters
