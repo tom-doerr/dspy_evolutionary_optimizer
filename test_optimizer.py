@@ -192,6 +192,40 @@ def test_parameter_validation(_metric_fixture: Callable[[Any, Any], float]) -> N
         growth_rate=0.3,
         max_population=20,
         debug=True,
+        use_mock=True
+    )
+    assert optimizer.config.generations == 5
+    assert optimizer.config.mutation_rate == 0.5
+    assert optimizer.config.use_mock is True
+
+    # Test edge cases
+    optimizer = FullyEvolutionaryPromptOptimizer(
+        metric=_metric_fixture,
+        generations=1,
+        mutation_rate=0.0,
+        growth_rate=0.0,
+        max_population=1,
+        debug=False,
+        use_mock=False
+    )
+    assert optimizer.config.generations == 1
+    assert optimizer.config.mutation_rate == 0.0
+
+    # Test invalid parameters
+    with pytest.raises(ValueError):
+        FullyEvolutionaryPromptOptimizer(metric=_metric_fixture, generations=0)
+    with pytest.raises(ValueError):
+        FullyEvolutionaryPromptOptimizer(metric=_metric_fixture, mutation_rate=1.1)
+    with pytest.raises(ValueError):
+        FullyEvolutionaryPromptOptimizer(metric=_metric_fixture, max_population=0)
+    # Test valid parameters
+    optimizer = FullyEvolutionaryPromptOptimizer(
+        metric=_metric_fixture,
+        generations=5,
+        mutation_rate=0.5,
+        growth_rate=0.3,
+        max_population=20,
+        debug=True,
         use_mock=True,
     )
     assert optimizer.config.generations == 5

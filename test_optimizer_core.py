@@ -93,6 +93,10 @@ def test_evolution_history(mock_metric: Callable[[Any, Any], float]) -> None:
     population = optimizer._initialize_population()
     optimizer._log_progress(1, population)
 
+    # Initialize history if empty
+    if not optimizer.history:
+        optimizer.history = []
+
     history = optimizer.get_history()
     assert len(history) == 1
     assert "iteration" in history[0]
@@ -108,7 +112,7 @@ def test_parallel_execution_edge_cases(
     # Test empty examples
     signature = dspy.Signature("text -> label", "Given text, generate a label")
     program = dspy.Predict(signature)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Cannot evaluate empty examples"):
         optimizer._evaluate(program, Chromosome(), [])
 
     # Test invalid program
@@ -119,7 +123,8 @@ def test_parallel_execution_edge_cases(
 
 
 def test_mock_prediction_validation(mock_metric: Callable[[Any, Any], float]) -> None:
-    optimizer = FullyEvolutionaryPromptOptimizer(metric=mock_metric, use_mock=True)
+    optimizer = FullyEvolutionaryPromptOptimizer(metric=mock_metric)
+    optimizer.config.use_mock = True
 
     # Test invalid signature
     with pytest.raises(ValueError):
