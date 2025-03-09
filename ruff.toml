@@ -41,11 +41,10 @@ ignore = [
     "PLR2004",  # Magic value used
 ]
 
-per-file-ignores = {
-    "tests/*": ["D"],  # Don't require docstrings in tests
-    "examples/*": ["D"],  # Don't require docstrings in examples
-    "src/*": ["D"]  # Don't require docstrings in examples
-}
+[lint.per-file-ignores]
+"tests/*" = ["D"]  # Don't require docstrings in tests
+"examples/*" = ["D"]  # Don't require docstrings in examples
+"src/*" = ["D"]  # Don't require docstrings in examples
 
 [flake8-bugbear]
 extend-immutable-calls = ["frozenset", "tuple"]
