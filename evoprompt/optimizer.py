@@ -19,7 +19,8 @@ class FullyEvolutionaryPromptOptimizer:
     - Logging evolution history
     """
     
-    def __init__(self, metric, generations=10, mutation_rate=0.5, growth_rate=0.3, max_population=100, debug=False, use_mock=None):
+    def __init__(self, metric, generations=10, mutation_rate=0.5, growth_rate=0.3, max_population=100, 
+                 max_inference_calls=1000, debug=False, use_mock=None):
         """
         Initialize the optimizer.
         
@@ -29,6 +30,7 @@ class FullyEvolutionaryPromptOptimizer:
             mutation_rate: Probability of mutating a prompt
             growth_rate: Base rate for spawning new variants (multiplied by score)
             max_population: Maximum number of prompts in the population
+            max_inference_calls: Maximum number of LLM inference calls to make
             debug: Enable debug logging
             use_mock: Force mock mode (True/False) or auto-detect if None
         """
@@ -40,6 +42,7 @@ class FullyEvolutionaryPromptOptimizer:
         self.history = []  # Store evolution stats per generation
         self.debug = debug
         self.inference_count = 0
+        self.max_inference_calls = max_inference_calls
         
         # Determine if we should use mock mode
         if use_mock is None:
@@ -193,8 +196,13 @@ class FullyEvolutionaryPromptOptimizer:
                         pred = self._create_mock_prediction(program.signature, input_kwargs, ex)
                         time.sleep(0.1)  # Simulate API latency
                     else:
-                        # Make a real prediction
-                        pred = predictor(**input_kwargs)
+                        # Make a real prediction if we haven't hit the limit
+                        if self.inference_count >= self.max_inference_calls:
+                            if self.debug:
+                                print("  Inference call limit reached, using mock prediction")
+                            pred = self._create_mock_prediction(program.signature, input_kwargs, ex)
+                        else:
+                            pred = predictor(**input_kwargs)
                     
                     elapsed = time.time() - start_time
                     self.inference_count += 1

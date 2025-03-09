@@ -64,6 +64,7 @@ def main():
         mutation_rate=0.8,  # High mutation rate for more exploration
         growth_rate=0.3,    # Moderate growth rate for population diversity
         max_population=15,  # Reasonable population size
+        max_inference_calls=1000,  # Increased inference call limit
         debug=True,
         use_mock=False      # Use real LLM calls for this example
     )
