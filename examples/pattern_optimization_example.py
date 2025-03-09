@@ -62,9 +62,9 @@ def main():
         metric=pattern_metric,
         generations=8,
         mutation_rate=0.8,  # High mutation rate for more exploration
-        growth_rate=0.3,    # Moderate growth rate for population diversity
-        max_population=15,  # Reasonable population size
-        max_inference_calls=100,  # Default inference call limit
+        growth_rate=0.5,    # Higher growth rate for more exploration
+        max_population=20,  # Larger population size
+        max_inference_calls=200,  # Increased inference call limit
         debug=True,
         use_mock=False      # Use real LLM calls for this example
     )

@@ -112,9 +112,15 @@ class FullyEvolutionaryPromptOptimizer:
                     new_population.append({"prompt": mutated, "score": None})
                 
                 # Growth: spawn new variants based on performance
-                # Use normalized score (ensure it's positive for growth rate calculation)
-                normalized_score = max(0.1, chromosome["score"] + 10)  # Add offset to handle negative scores
-                if random.random() < self.growth_rate * normalized_score / 10:  # Scale back to reasonable range
+                # Use normalized score between 0 and 1
+                min_score = min(scores) if scores else 0
+                max_score = max(scores) if scores else 1
+                if max_score == min_score:
+                    normalized_score = 0.5  # Default if all scores are equal
+                else:
+                    normalized_score = (chromosome["score"] - min_score) / (max_score - min_score)
+                
+                if random.random() < self.growth_rate * normalized_score:
                     crossed = self._crossover(chromosome["prompt"], random.choice(population)["prompt"])
                     new_population.append({"prompt": crossed, "score": None})
             
@@ -197,12 +203,13 @@ class FullyEvolutionaryPromptOptimizer:
                         time.sleep(0.1)  # Simulate API latency
                     else:
                         # Make a real prediction if we haven't hit the limit
-                        if self.inference_count >= self.max_inference_calls:
+                        if self.max_inference_calls > 0 and self.inference_count >= self.max_inference_calls:
                             if self.debug:
                                 print("  Inference call limit reached, using mock prediction")
                             pred = self._create_mock_prediction(program.signature, input_kwargs, ex)
                         else:
                             pred = predictor(**input_kwargs)
+                            self.inference_count += 1
                     
                     elapsed = time.time() - start_time
                     self.inference_count += 1
