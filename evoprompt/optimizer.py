@@ -42,6 +42,7 @@ class FullyEvolutionaryPromptOptimizer:
         self.mutation_rate = mutation_rate
         self.growth_rate = growth_rate
         self.max_population = max_population
+        self.max_workers = max_workers
         self.history = []  # Store evolution stats per generation
         self.debug = debug
         self.inference_count = 0
