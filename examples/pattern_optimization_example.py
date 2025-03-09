@@ -12,10 +12,10 @@ from evoprompt.visualization import plot_evolution_history
 
 def main():
     # Initialize the language model
-    lm = dspy.LM('openrouter/google/gemini-2.0-flash-001')
+    lm = dspy.LM('openrouter/google/gemini-2.0-flash-001', cache=False)
     
     # Configure DSPy
-    dspy.settings.configure(lm=lm, cache=False)
+    dspy.settings.configure(lm=lm)
     print("DSPy settings - Cache:", dspy.settings.cache)
     
     # Test LM connectivity
