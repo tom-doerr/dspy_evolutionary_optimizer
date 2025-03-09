@@ -15,7 +15,7 @@ def mock_metric() -> Callable[[Any, Any], float]:
     return metric
 
 
-def test_parallel_evaluation(_mock_metric: Callable[[Any, Any], float]) -> None:
+def test_parallel_evaluation(mock_metric: Callable[[Any, Any], float]) -> None:
     # Test normal case
     optimizer = FullyEvolutionaryPromptOptimizer(metric=mock_metric, max_workers=2)
     signature = dspy.Signature("text -> label")
@@ -53,7 +53,7 @@ def test_parallel_evaluation(_mock_metric: Callable[[Any, Any], float]) -> None:
     assert 0 <= score <= 1.0
 
 
-def test_mock_prediction(_mock_metric: Callable[[Any, Any], float]) -> None:
+def test_mock_prediction(mock_metric: Callable[[Any, Any], float]) -> None:
     # Test basic mock prediction
     optimizer = FullyEvolutionaryPromptOptimizer(metric=mock_metric)
     optimizer.config.use_mock = True  # Set mock mode through config
@@ -102,6 +102,7 @@ def test_evolution_history(mock_metric: Callable[[Any, Any], float]) -> None:
     if not optimizer.history:
         optimizer.history = []
 
+    optimizer.history = [{"iteration": 1, "best_score": 0.9, "population_size": 10}]
     optimizer.history = [{"iteration": 1, "best_score": 0.9, "population_size": 10}]
     history = optimizer.get_history()
     assert len(history) == 1
