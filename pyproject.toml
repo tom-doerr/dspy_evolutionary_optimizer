@@ -1,35 +1,10 @@
 [tool.ruff]
-# Enable pycodestyle (PEP 8) rules
-select = [
-    "E",  # pycodestyle errors
-    "W",  # pycodestyle warnings
-    "F",  # pyflake8
-    "I",  # isort
-    "B",  # flake8-bugbear
-    "C",  # flake8-comprehensions
-    "A",  # flake8-builtins
-    "N",  # pep8-naming
-    "UP", # pyupgrade
-    "YTT", # flake8-2020
-    "RUF", # ruff-specific rules
-]
-
-# Disable specific rules
-ignore = [
-    "E501",  # line too long
-    "E203",  # whitespace before ':' (conflicts with black)
-    "N802",  # function name should be lowercase
-    "N803",  # argument name should be lowercase
-    "N806",  # variable in function should be lowercase
-]
-
-# Line length
 line-length = 88
-
-# Exclude files
+select = ["E", "W", "F", "I", "B", "C", "A", "N", "UP", "YTT", "RUF"]
+ignore = ["E501", "E203", "N802", "N803", "N806"]
 exclude = [
     ".git",
-    ".mypy_cache",
+    ".mypy_cache", 
     ".pytest_cache",
     ".ruff_cache",
     "__pycache__",
