@@ -77,6 +77,10 @@ class FullyEvolutionaryPromptOptimizer:
             raise ValueError("Mutation rate must be between 0 and 1")
         if "max_population" in params and params["max_population"] <= 0:
             raise ValueError("Max population must be positive")
+        if "mutation_rate" in params and not 0 <= params["mutation_rate"] <= 1:
+            raise ValueError("Mutation rate must be between 0 and 1")
+        if "max_population" in params and params["max_population"] <= 0:
+            raise ValueError("Max population must be positive")
 
     def _initialize_config(self, metric: Callable, kwargs: dict) -> None:
         """Set up optimizer configuration."""
