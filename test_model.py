@@ -30,7 +30,9 @@ def main() -> None:
     print("\nTesting with DSPy Predict...")
 
     # Define a simple signature
-    signature = dspy.Signature("message -> response", "Given message, generate response")
+    signature = dspy.Signature(
+        "message -> response", "Given message, generate response"
+    )
     signature.__doc__ = "Given a message, generate a response"
     signature.__doc__ = "Given a message, generate a response"
 
@@ -54,7 +56,7 @@ def test_model_error_handling():
     # Test invalid model name
     with pytest.raises(ValueError, match="Invalid model name"):
         dspy.LM("invalid/model/name")
-    
+
     # Test empty input
     lm = dspy.LM("openrouter/google/gemini-2.0-flash-001")
     with pytest.raises(ValueError, match="Input cannot be empty"):

@@ -54,7 +54,7 @@ class FullyEvolutionaryPromptOptimizer:
         """Initialize the optimizer with configuration and state."""
         if not callable(metric):
             raise TypeError("Metric must be a callable function")
-            
+
         self._validate_init_params(kwargs)
         self._initialize_config(metric, kwargs)
         self.population = []
@@ -341,7 +341,9 @@ class FullyEvolutionaryPromptOptimizer:
         ]
         return self.population
 
-    def _process_population(self, population, program, trainset, iteration, recent_scores):
+    def _process_population(
+        self, population, program, trainset, iteration, recent_scores
+    ):
         """Process one iteration of population evolution.
 
         Args:
