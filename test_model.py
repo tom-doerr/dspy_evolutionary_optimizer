@@ -146,15 +146,32 @@ def test_model_error_handling():
 
 def test_predictor_error_handling():
     """Test error handling in DSPy Predict."""
+    # Test invalid signature type
+    with pytest.raises(TypeError, match="signature must be a dspy.Signature"):
+        dspy.Predict("not_a_signature")
+
+    # Test valid signature but invalid input
+    signature = dspy.Signature("text -> response")
+    predictor = dspy.Predict(signature)
+    
+    # Test missing required field
+    with pytest.raises(ValueError, match="Missing required input field 'text'"):
+        predictor({})
+
+    # Test invalid input type
+    with pytest.raises(TypeError, match="Input must be a dictionary"):
+        predictor("not_a_dict")
+
+    # Test valid prediction
+    result = predictor({"text": "test input"})
+    assert hasattr(result, "response")
+    """Test error handling in DSPy Predict."""
     # Test invalid signature
     with pytest.raises(TypeError, match="signature must be a dspy.Signature"):
         dspy.Predict(None)
 
     # Test invalid input
-    signature = dspy.Signature("text -> response", "Given text, generate response")
-    signature.__doc__ = "Given text, generate a response"
-    predictor = dspy.Predict(signature)
-    signature.__doc__ = "Given text, generate a response"
+    signature = dspy.Signature("text -> response")
     predictor = dspy.Predict(signature)
     with pytest.raises(TypeError, match="Input must be a dictionary"):
         predictor(None)
