@@ -57,7 +57,7 @@ def test_model_error_handling():
 
     # Initialize a valid LM for other tests
     lm = dspy.LM("openrouter/google/gemini-2.0-flash-001")
-    
+
     # Test empty input
     with pytest.raises(ValueError, match="Input cannot be empty"):
         lm("")
