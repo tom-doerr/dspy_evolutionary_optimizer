@@ -34,6 +34,7 @@ def basic_optimizer_fixture(
 def mock_signature() -> dspy.Signature:
     signature = dspy.Signature("text -> label")
     signature.__doc__ = "Given text, generate a label"
+    signature.__doc__ = "Given text, generate a label"
     return signature
 
 

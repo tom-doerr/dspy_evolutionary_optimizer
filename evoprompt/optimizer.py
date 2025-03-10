@@ -202,8 +202,7 @@ class FullyEvolutionaryPromptOptimizer:
         try:
             return ProgressBar(
                 total=self.config.max_inference_calls,
-                completed=self.state.inference_count,
-                width=50,
+                completed=self.state.inference_count
             )
         except (ValueError, TypeError, AttributeError) as e:
             if self.debug:
@@ -768,7 +767,7 @@ class FullyEvolutionaryPromptOptimizer:
         scores = []
         for pred, ex in zip(predictions, trainset):
             try:
-                score = self.metric(pred, ex)
+                score = self.config.metric(pred, ex)
                 scores.append(score)
             except Exception as e:
                 print(f"Error in metric calculation: {e}")
@@ -783,7 +782,7 @@ class FullyEvolutionaryPromptOptimizer:
         scores = []
         for pred, ex in zip(predictions, trainset):
             try:
-                score = self.metric(pred, ex)
+                score = self.config.metric(pred, ex)
                 scores.append(score)
             except Exception as e:
                 print(f"Error in metric calculation: {e}")
@@ -841,7 +840,7 @@ class FullyEvolutionaryPromptOptimizer:
             for future in as_completed(futures):
                 try:
                     pred = future.result()
-                    score = self.metric(pred, future.example)
+                    score = self.config.metric(pred, future.example)
                     scores.append(score)
                 except Exception as e:
                     print(f"Parallel evaluation error: {e}")

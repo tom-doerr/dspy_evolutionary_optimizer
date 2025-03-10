@@ -18,7 +18,8 @@ def mock_metric() -> Callable[[Any, Any], float]:
 def test_parallel_evaluation(mock_metric: Callable[[Any, Any], float]) -> None:
     # Test normal case
     optimizer = FullyEvolutionaryPromptOptimizer(metric=mock_metric, max_workers=2)
-    signature = dspy.Signature("text -> label", "Given text, generate a label")
+    signature = dspy.Signature("text -> label")
+    signature.__doc__ = "Given text, generate a label"
     program = dspy.Predict(signature)
     examples = [
         dspy.Example(text="Great product!", label="positive"),
