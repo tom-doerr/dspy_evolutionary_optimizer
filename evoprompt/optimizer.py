@@ -70,11 +70,7 @@ class FullyEvolutionaryPromptOptimizer:
 
     def _initialize_state(self) -> None:
         """Initialize optimizer state variables."""
-        self.state = OptimizerState(
-            inference_count=0,
-            population=[],
-            history=[]
-        )
+        self.state = OptimizerState(inference_count=0, population=[], history=[])
         self.history = self.state.history
         self.population = self.state.population
         self.inference_count = self.state.inference_count
