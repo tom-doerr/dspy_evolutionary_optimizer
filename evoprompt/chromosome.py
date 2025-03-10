@@ -6,12 +6,13 @@ logger = logging.getLogger(__name__)
 
 
 class Chromosome:
-    """Represents a prompt chromosome with task and mutation parts."""
+    """Represents a prompt chromosome with multiple functional parts."""
 
     def _validate_parts(self) -> None:
         """Validate that parts are valid strings."""
         if not all(
-            isinstance(part, str) for part in self.task_parts + self.mutation_parts
+            isinstance(part, str) for part in 
+            self.task_parts + self.mutation_parts + self.mating_parts
         ):
             raise TypeError("All parts must be strings")
 
@@ -19,15 +20,21 @@ class Chromosome:
         self,
         task_parts: Optional[List[str]] = None,
         mutation_parts: Optional[List[str]] = None,
+        mating_parts: Optional[List[str]] = None,
+        chromosome_type: str = "task"  # task/mutation/mating
     ) -> None:
         """Initialize a Chromosome instance.
 
         Args:
             task_parts: List of task-related prompt parts
-            mutation_parts: List of mutation-related prompt parts
+            mutation_parts: List of mutation-related prompt parts  
+            mating_parts: List of mating-related prompt parts
+            chromosome_type: Type of chromosome (task/mutation/mating)
         """
         self.task_parts = task_parts or []
         self.mutation_parts = mutation_parts or []
+        self.mating_parts = mating_parts or []
+        self.chromosome_type = chromosome_type
         self._validate_parts()
 
     def combine(self, other: "Chromosome") -> "Chromosome":

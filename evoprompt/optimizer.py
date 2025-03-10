@@ -343,14 +343,48 @@ class FullyEvolutionaryPromptOptimizer:
 
     def _initialize_population(self):
         """Initialize the starting population with chromosomes."""
-        base_task = ["{{input}}", "{{output}}"]
-        base_mutation = []
-
-        chromosome = Chromosome(base_task, base_mutation)
+        # Initialize task chromosome
+        task_chromosome = Chromosome(
+            task_parts=["{{input}}", "{{output}}"],
+            chromosome_type="task"
+        )
+        
+        # Initialize mutation chromosome
+        mutation_chromosome = Chromosome(
+            mutation_parts=[
+                "Modify the prompt to improve its performance",
+                "Add or remove instructions as needed",
+                "Keep the core meaning intact"
+            ],
+            chromosome_type="mutation"
+        )
+        
+        # Initialize mating chromosome
+        mating_chromosome = Chromosome(
+            mating_parts=[
+                "Combine the best aspects of both prompts",
+                "Maintain coherence and clarity",
+                "Create a new effective prompt"
+            ],
+            chromosome_type="mating"
+        )
+        
         self.population = [
             {
-                "prompt": chromosome.to_prompt(),
-                "chromosome": chromosome,
+                "prompt": task_chromosome.to_prompt(),
+                "chromosome": task_chromosome,
+                "score": None,
+                "last_used": 0,
+            },
+            {
+                "prompt": mutation_chromosome.to_prompt(),
+                "chromosome": mutation_chromosome,
+                "score": None,
+                "last_used": 0,
+            },
+            {
+                "prompt": mating_chromosome.to_prompt(),
+                "chromosome": mating_chromosome,
                 "score": None,
                 "last_used": 0,
             }
@@ -540,7 +574,17 @@ class FullyEvolutionaryPromptOptimizer:
         return population, recent_scores
 
     def _mate_high_performers(self, population, selected, top_20_percentile, iteration):
-        """Mate high performing chromosomes."""
+        """Mate high performing chromosomes using mating chromosome."""
+        # Get mating chromosome
+        mating_chromosome = next(
+            (c for c in population if c["chromosome"].chromosome_type == "mating"),
+            None
+        )
+        
+        if not mating_chromosome:
+            return
+
+        # Get high performers
         high_performers = [
             p
             for p in population
@@ -551,10 +595,34 @@ class FullyEvolutionaryPromptOptimizer:
 
         if high_performers:
             mate = random.choice(high_performers)
-            new_chromosome = selected["chromosome"].combine(mate["chromosome"])
-            population.append(
-                {"chromosome": new_chromosome, "score": None, "last_used": iteration}
+            
+            # Create mating instruction
+            mating_prompt = mating_chromosome["prompt"]
+            instruction = (
+                f"{mating_prompt}\n"
+                f"Parent 1: {selected['prompt']}\n"
+                f"Parent 2: {mate['prompt']}\n"
+                f"Child Prompt:"
             )
+            
+            # Get LLM to perform mating
+            try:
+                response = self.lm(instruction)
+                child_prompt = response.strip()
+                
+                # Create new chromosome
+                new_chromosome = Chromosome(
+                    task_parts=child_prompt.split(),
+                    chromosome_type="task"
+                )
+                
+                population.append(
+                    {"chromosome": new_chromosome, "score": None, "last_used": iteration}
+                )
+                
+            except Exception as e:
+                if self.debug:
+                    print(f"Mating failed: {e}")
 
     def _apply_mutation(self, population, selected, iteration):
         """Apply mutation to a selected prompt."""
@@ -1047,48 +1115,50 @@ class FullyEvolutionaryPromptOptimizer:
         ]
 
     def _mutate(self, prompt: str) -> str:
-        """Apply weighted random mutations to a prompt.
+        """Apply LLM-guided mutations to a prompt using mutation chromosome.
 
         Args:
             prompt: Prompt to mutate
 
         Returns:
-            A mutated version of the prompt with controlled intensity
-
-        Raises:
-            ValueError: If prompt is empty
-            TypeError: If prompt is not a string
+            A mutated version of the prompt
         """
         if not prompt:
             raise ValueError("Cannot mutate empty prompt")
         if not isinstance(prompt, str):
             raise TypeError("Prompt must be a string")
 
-        if not hasattr(self, "population"):
-            self.population = []
+        # Get mutation chromosome
+        mutation_chromosome = next(
+            (c for c in self.population if c["chromosome"].chromosome_type == "mutation"),
+            None
+        )
+        
+        if not mutation_chromosome:
+            return prompt
 
-        prompt = self._ensure_placeholders(prompt)
-        weighted_mutations = self._get_mutations()
-
-        # Calculate mutation intensity based on current score
-        current_score = self._get_prompt_score(prompt)
-        intensity = 1.0 - current_score  # More intense mutations for lower scores
-
-        # Apply mutations based on intensity
-        num_mutations = max(1, min(3, int(3 * intensity)))
-        mutations = [m for _, m in weighted_mutations]
-        weights = [w for w, _ in weighted_mutations]
-
-        for _ in range(num_mutations):
-            # Select mutation based on weights
-            mutation_fn = random.choices(mutations, weights=weights, k=1)[0]
-            prompt = mutation_fn(prompt)
-
-            # Ensure prompt doesn't grow too large
-            if len(prompt.split()) > 50:
-                prompt = " ".join(prompt.split()[:50])
-
-        return prompt
+        # Create mutation instruction
+        mutation_prompt = mutation_chromosome["prompt"]
+        instruction = f"{mutation_prompt}\nOriginal Prompt: {prompt}\nMutated Prompt:"
+        
+        # Get LLM to perform mutation
+        try:
+            response = self.lm(instruction)
+            mutated = response.strip()
+            
+            # Ensure placeholders are preserved
+            mutated = self._ensure_placeholders(mutated)
+            
+            # Limit size
+            if len(mutated.split()) > 50:
+                mutated = " ".join(mutated.split()[:50])
+                
+            return mutated
+            
+        except Exception as e:
+            if self.debug:
+                print(f"Mutation failed: {e}")
+            return prompt
 
     def _get_prompt_score(self, prompt: str) -> float:
         """Get the current score for a prompt if it exists in population."""
