@@ -839,6 +839,13 @@ def test_mutation_logic(metric_fixture: Callable[[Any, Any], float]) -> None:
     assert "{{output}}" in highly_mutated
     assert len(highly_mutated) >= len(original)
 
+    # Test mutation with rate 1.0
+    optimizer.config.mutation_rate = 1.0
+    highly_mutated = optimizer._mutate(original)
+    assert "{{input}}" in highly_mutated
+    assert "{{output}}" in highly_mutated
+    assert len(highly_mutated) >= len(original)
+
     optimizer.config.mutation_rate = 1.0
     highly_mutated = optimizer._mutate(original)
     assert len(highly_mutated) > len(original) * 1.5  # Significant growth
