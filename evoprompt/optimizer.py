@@ -37,6 +37,8 @@ class OptimizerState:
     inference_count: int = 0
     population: List[Dict[str, Any]] = None
     history: List[Dict[str, Any]] = None
+    iteration: int = 0
+    recent_scores: List[float] = None
 
 
 class FullyEvolutionaryPromptOptimizer:
@@ -51,6 +53,7 @@ class FullyEvolutionaryPromptOptimizer:
     def __init__(self, metric: Callable, **kwargs):
         """Initialize the optimizer with configuration and state."""
         self._initialize_config(metric, kwargs)
+        self.population = []
         self._initialize_state()
         self._log_mock_mode()
 
@@ -74,6 +77,7 @@ class FullyEvolutionaryPromptOptimizer:
         )
         self.history = self.state.history
         self.population = self.state.population
+        self.inference_count = self.state.inference_count
 
     def _log_mock_mode(self) -> None:
         """Log mock mode status if debug is enabled."""
@@ -212,7 +216,7 @@ class FullyEvolutionaryPromptOptimizer:
         try:
             return ProgressBar(
                 total=self.config.max_inference_calls,
-                completed=self.state.inference_count,
+                progress=self.state.inference_count,
             )
         except (ValueError, TypeError, AttributeError) as e:
             if self.debug:
@@ -329,7 +333,7 @@ class FullyEvolutionaryPromptOptimizer:
         return self.population
 
     def _process_population(
-        self, *, population, program, trainset, iteration, recent_scores, **kwargs
+        self, *, population, program, trainset, iteration, recent_scores
     ):
         """Process one iteration of population evolution.
 
@@ -472,9 +476,9 @@ class FullyEvolutionaryPromptOptimizer:
 
         return population
 
-    def _process_generation(
-        self, population, program, trainset, iteration, recent_scores
-    ):
+    def _process_generation(self, population, program, trainset):
+        iteration = self.state.iteration
+        recent_scores = self.state.recent_scores
         """Process one generation of evolution."""
         # Select a prompt probabilistically based on score
         selected = self._select_prompt(population)
@@ -737,7 +741,7 @@ class FullyEvolutionaryPromptOptimizer:
             try:
                 score = self.config.metric(pred, ex)
                 scores.append(score)
-            except Exception as e:
+            except (ValueError, TypeError, KeyError) as e:
                 print(f"Error in metric calculation: {e}")
                 scores.append(0.0)
 
