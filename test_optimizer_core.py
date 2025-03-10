@@ -155,6 +155,10 @@ def test_parallel_execution_edge_cases(
     program = dspy.Predict(signature)
     with pytest.raises(ValueError, match="Cannot evaluate empty examples"):
         optimizer._evaluate(program, Chromosome(), [])
+    
+    # Test invalid program type
+    with pytest.raises(TypeError, match="Program must be a DSPy Predict module"):
+        optimizer._evaluate("not_a_program", Chromosome(), [dspy.Example(text="test")])
 
     # Test invalid program type
     with pytest.raises(TypeError, match="Program must be a DSPy Predict module"):
