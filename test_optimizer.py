@@ -32,7 +32,7 @@ def basic_optimizer_fixture(
 
 @pytest.fixture
 def mock_signature() -> dspy.Signature:
-    signature = dspy.Signature("text -> label")
+    signature = dspy.Signature("text -> label", "Given text, generate label")
     signature.__doc__ = "Given text, generate a label"
     signature.__doc__ = "Given text, generate a label"
     return signature
@@ -234,7 +234,7 @@ def test_parameter_validation(metric_fixture: Callable[[Any, Any], float]) -> No
         FullyEvolutionaryPromptOptimizer(
             metric=metric_fixture, use_mock="not_a_boolean"
         )
-    """Test validation of optimizer parameters."""
+    # Remove duplicate docstring
     # Test valid parameters
     optimizer = FullyEvolutionaryPromptOptimizer(
         metric=metric_fixture,
@@ -281,7 +281,7 @@ def test_parameter_validation(metric_fixture: Callable[[Any, Any], float]) -> No
         FullyEvolutionaryPromptOptimizer(
             metric=metric_fixture, use_mock="not_a_boolean"
         )
-    """Test validation of optimizer parameters."""
+    # Remove duplicate docstring
     # Test valid parameters
     optimizer = FullyEvolutionaryPromptOptimizer(
         metric=metric_fixture,
@@ -328,7 +328,7 @@ def test_parameter_validation(metric_fixture: Callable[[Any, Any], float]) -> No
         FullyEvolutionaryPromptOptimizer(
             metric=metric_fixture, use_mock="not_a_boolean"
         )
-    """Test validation of optimizer parameters."""
+    # Remove duplicate docstring
     # Test valid parameters
     optimizer = FullyEvolutionaryPromptOptimizer(
         metric=metric_fixture,
@@ -375,7 +375,7 @@ def test_parameter_validation(metric_fixture: Callable[[Any, Any], float]) -> No
         FullyEvolutionaryPromptOptimizer(
             metric=metric_fixture, use_mock="not_a_boolean"
         )
-    """Test validation of optimizer parameters."""
+    # Remove duplicate docstring
     # Test valid parameters
     optimizer = FullyEvolutionaryPromptOptimizer(
         metric=metric_fixture,
@@ -620,7 +620,7 @@ def test_parameter_validation(metric_fixture: Callable[[Any, Any], float]) -> No
 
 
 def test_population_handling(metric_fixture: Callable[[Any, Any], float]) -> None:
-    """Test population handling and evolution logic."""
+    # Remove duplicate docstring
     optimizer = FullyEvolutionaryPromptOptimizer(metric=metric_fixture)
 
     # Test empty population
@@ -673,7 +673,7 @@ def test_population_handling(metric_fixture: Callable[[Any, Any], float]) -> Non
         optimizer._update_population(
             [{"invalid": "data"}], iteration=1, recent_scores=[0.9]
         )
-    """Test population handling and evolution logic."""
+    # Remove duplicate docstring
     optimizer = FullyEvolutionaryPromptOptimizer(metric=metric_fixture)
 
     # Test empty population

@@ -225,7 +225,7 @@ class FullyEvolutionaryPromptOptimizer:
         try:
             return ProgressBar(
                 total=self.config.max_inference_calls,
-                progress=self.state.inference_count,
+                completed=self.state.inference_count,
             )
         except (ValueError, TypeError, AttributeError) as e:
             if self.debug:
@@ -341,9 +341,7 @@ class FullyEvolutionaryPromptOptimizer:
         ]
         return self.population
 
-    def _process_population(
-        self, *, population, program, trainset, iteration, recent_scores
-    ):
+    def _process_population(self, population, program, trainset, iteration, recent_scores):
         """Process one iteration of population evolution.
 
         Args:
@@ -488,7 +486,7 @@ class FullyEvolutionaryPromptOptimizer:
     def _process_generation(self, population, program, trainset):
         iteration = self.state.iteration
         recent_scores = self.state.recent_scores
-        """Process one generation of evolution."""
+        # Process one generation of evolution
         # Select a prompt probabilistically based on score
         selected = self._select_prompt(population)
 
@@ -792,7 +790,7 @@ class FullyEvolutionaryPromptOptimizer:
             try:
                 score = self.config.metric(pred, ex)
                 scores.append(score)
-            except Exception as e:
+            except (ValueError, TypeError, KeyError) as e:
                 print(f"Error in metric calculation: {e}")
                 scores.append(0.0)
         return scores
@@ -807,7 +805,7 @@ class FullyEvolutionaryPromptOptimizer:
             try:
                 score = self.config.metric(pred, ex)
                 scores.append(score)
-            except Exception as e:
+            except (ValueError, TypeError, KeyError) as e:
                 print(f"Error in metric calculation: {e}")
                 scores.append(0.0)
 
@@ -840,7 +838,7 @@ class FullyEvolutionaryPromptOptimizer:
                 return 0.0
             return self._evaluate_predictions(predictions, trainset)
 
-        except Exception as e:
+        except (ValueError, TypeError, RuntimeError) as e:
             print(f"Evaluation error: {e}")
             return 0.0
 
@@ -865,7 +863,7 @@ class FullyEvolutionaryPromptOptimizer:
                     pred = future.result()
                     score = self.config.metric(pred, future.example)
                     scores.append(score)
-                except Exception as e:
+                except (ValueError, TypeError, RuntimeError) as e:
                     print(f"Parallel evaluation error: {e}")
                     scores.append(0.0)
 
