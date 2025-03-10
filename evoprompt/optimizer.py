@@ -1103,7 +1103,14 @@ class FullyEvolutionaryPromptOptimizer:
         Returns:
             A mock prediction object that will pass the metric
 
+        Raises:
+            ValueError: If signature is None or input_kwargs is empty
         """
+        if signature is None:
+            raise ValueError("Signature cannot be None")
+        if not input_kwargs:
+            raise ValueError("Input kwargs cannot be empty")
+
         MockPrediction = self._create_mock_prediction_class()
 
         # Generate more realistic mock responses based on input
