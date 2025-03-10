@@ -32,7 +32,7 @@ def basic_optimizer_fixture(
 
 @pytest.fixture
 def mock_signature() -> dspy.Signature:
-    signature = dspy.Signature("text -> label", "Given text, generate label")
+    signature = dspy.Signature("text -> label")
     signature.__doc__ = "Given text, generate a label"
     signature.__doc__ = "Given text, generate a label"
     return signature
@@ -538,7 +538,7 @@ def test_parameter_validation(metric_fixture: Callable[[Any, Any], float]) -> No
             metric=_mock_metric, generations=0
         )  # pylint: disable=undefined-variable
     with pytest.raises(ValueError):
-        FullyEvolutionaryPromptOptimizer(mock_metric, generations=-1)
+        FullyEvolutionaryPromptOptimizer(metric_fixture, generations=-1)
 
     # Test invalid mutation rate
     with pytest.raises(ValueError):
@@ -631,6 +631,7 @@ def test_population_handling(metric_fixture: Callable[[Any, Any], float]) -> Non
 
     # Test empty population
     with pytest.raises(ValueError, match="Cannot update empty population"):
+        # pylint: disable=protected-access
         optimizer._update_population([], iteration=1, recent_scores=[])
 
     # Test invalid population type
@@ -716,7 +717,7 @@ def test_population_handling(metric_fixture: Callable[[Any, Any], float]) -> Non
         optimizer._update_population(
             [{"invalid": "data"}], iteration=1, recent_scores=[0.9]
         )
-    """Test population handling and evolution logic."""
+    # Test population handling and evolution logic
     optimizer = FullyEvolutionaryPromptOptimizer(metric=metric_fixture)
 
     # Test empty population
