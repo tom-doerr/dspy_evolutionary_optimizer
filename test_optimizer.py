@@ -187,11 +187,11 @@ def _test_generations_validation(optimizer, metric):
         optimizer(metric, generations=-1)
 
 
-def _test_mutation_rate_validation(optimizer):
+def _test_mutation_rate_validation(optimizer, metric):
     with pytest.raises(ValueError):
-        optimizer(metric_fixture, mutation_rate=1.1)
+        optimizer(metric, mutation_rate=1.1)
     with pytest.raises(ValueError):
-        optimizer(metric_fixture, mutation_rate=-0.1)
+        optimizer(metric, mutation_rate=-0.1)
 
 
 def test_parameter_validation_basic(metric_fixture: Callable[[Any, Any], float]) -> None:
@@ -211,7 +211,6 @@ def test_parameter_validation_basic(metric_fixture: Callable[[Any, Any], float])
 
 def test_parameter_validation_edge_cases(metric_fixture: Callable[[Any, Any], float]) -> None:
     """Test edge case parameter validation"""
-    """Test parameter validation in optimizer initialization."""
     # Test valid parameters
     optimizer = FullyEvolutionaryPromptOptimizer(
         metric=metric_fixture,
@@ -602,7 +601,7 @@ def test_parameter_validation_edge_cases(metric_fixture: Callable[[Any, Any], fl
     with pytest.raises(ValueError):
         FullyEvolutionaryPromptOptimizer(metric_fixture, mutation_rate=1.1)
     with pytest.raises(ValueError):
-        FullyEvolutionaryPromptOptimizer(mock_metric, mutation_rate=-0.1)
+        FullyEvolutionaryPromptOptimizer(metric_fixture, mutation_rate=-0.1)
 
     # Test invalid max workers
     with pytest.raises(ValueError):
@@ -892,10 +891,11 @@ def test_mutation_logic() -> None:
         optimizer._mutate(None)
 
 
-def test_crossover_logic(metric_fixture: Callable[[Any, Any], float]) -> None:
+def test_crossover_logic() -> None:
     optimizer = FullyEvolutionaryPromptOptimizer(metric=_metric_fixture)
     p1 = "Given {{input}}, generate {{output}}"
     p2 = "Analyze {{input}} and produce {{output}}"
+    # pylint: disable=protected-access
     crossed = optimizer._crossover(p1, p2)
     assert "{{input}}" in crossed
     assert "{{output}}" in crossed

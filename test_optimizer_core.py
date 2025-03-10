@@ -76,7 +76,7 @@ def test_mock_prediction(mock_metric: Callable[[Any, Any], float]) -> None:
     # Test basic mock prediction
     optimizer = FullyEvolutionaryPromptOptimizer(metric=mock_metric)
     optimizer.config.use_mock = True  # Set mock mode through config
-    signature = dspy.Signature("text -> label", "Given text, generate a label")
+    signature = dspy.Signature("text -> label")
     # pylint: disable=protected-access
     MockPrediction = optimizer._create_mock_prediction_class()
     assert MockPrediction is not None
@@ -93,6 +93,7 @@ def test_mock_prediction(mock_metric: Callable[[Any, Any], float]) -> None:
     pred = optimizer._create_mock_prediction(signature, {"text": "test"}, example)
     assert hasattr(pred, "label")
     assert hasattr(pred, "score")
+    # pylint: disable=no-member
     assert isinstance(pred.label, str)
     assert isinstance(pred.score, str)
 
@@ -214,7 +215,20 @@ def test_parallel_execution_edge_cases(
         )
 
 
+def test_mock_prediction_basic(mock_metric: Callable[[Any, Any], float]) -> None:
+    """Test basic mock prediction functionality"""
+    optimizer = FullyEvolutionaryPromptOptimizer(metric=mock_metric)
+    optimizer.config.use_mock = True
+    signature = dspy.Signature("text -> label")
+    example = dspy.Example(text="Test", label="positive")
+    
+    # Test basic prediction
+    pred = optimizer._create_mock_prediction(signature, {"text": "test"}, example)
+    assert hasattr(pred, "label")
+    assert isinstance(pred.label, str)
+
 def test_mock_prediction_validation(mock_metric: Callable[[Any, Any], float]) -> None:
+    """Test mock prediction validation"""
     optimizer = FullyEvolutionaryPromptOptimizer(metric=mock_metric)
     optimizer.config.use_mock = True
 
