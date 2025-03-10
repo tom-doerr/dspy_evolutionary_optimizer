@@ -1,11 +1,12 @@
 """Main implementation of the evolutionary prompt optimizer."""
 
+from dataclasses import dataclass
+from statistics import mean
+from typing import List, Dict, Any, Callable, Tuple, Optional
 import copy
 import random
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from .core import EvolutionaryCore, OptimizerConfig, OptimizerState
-from typing import List, Dict, Any, Callable, Tuple, Optional
 
 # Third-party imports
 import dspy
@@ -20,6 +21,7 @@ from evoprompt.chromosome import Chromosome
 
 @dataclass
 class OptimizerConfig:
+    """Configuration for the evolutionary optimizer."""
     metric: Callable
     generations: int = 10
     mutation_rate: float = 0.5
@@ -30,14 +32,18 @@ class OptimizerConfig:
     max_inference_calls: int = 100
     use_mock: bool = False
 
-
-@dataclass
-class OptimizerState:
-    inference_count: int = 0
-    population: List[Dict[str, Any]] = None
-    history: List[Dict[str, Any]] = None
-    iteration: int = 0
-    recent_scores: List[float] = None
+    def validate(self) -> None:
+        """Validate configuration parameters."""
+        if not callable(self.metric):
+            raise TypeError("Metric must be callable")
+        if self.generations <= 0:
+            raise ValueError("Generations must be positive")
+        if not 0 <= self.mutation_rate <= 1:
+            raise ValueError("Mutation rate must be between 0 and 1")
+        if self.max_population <= 0:
+            raise ValueError("Max population must be positive")
+        if self.max_workers <= 0:
+            raise ValueError("Max workers must be positive")
 
 
 class FullyEvolutionaryPromptOptimizer:
@@ -165,11 +171,28 @@ class FullyEvolutionaryPromptOptimizer:
         # Select using weighted probabilities
         return random.choices(scored_population, weights=probs, k=1)[0]
 
+    def _remove_stale_prompts(
+        self, population: List[Dict[str, Any]], iteration: int
+    ) -> List[Dict[str, Any]]:
+        """Remove prompts that haven't been used recently."""
+        return [
+            p for p in population
+            if iteration - p["last_used"] < 10 or p["score"] is None
+        ]
+
+    def _enforce_population_limit(
+        self, population: List[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
+        """Enforce population size limit."""
+        if len(population) > self.config.max_population:
+            scored_population = [p for p in population if p["score"] is not None]
+            if len(scored_population) > self.config.max_population:
+                scored_population.sort(key=lambda x: x["score"])
+                return scored_population[-self.config.max_population :]
+        return population
+
     def _update_population(
-        self,
-        population: List[Dict[str, Any]],
-        iteration: int,
-        recent_scores: List[float],
+        self, population: List[Dict[str, Any]], iteration: int
     ) -> List[Dict[str, Any]]:
         """Update population based on scores and iteration.
 
@@ -229,7 +252,7 @@ class FullyEvolutionaryPromptOptimizer:
             return None, None, None
 
         best_score = max(scores)
-        avg_score = mean(scores)
+        avg_score = sum(scores) / len(scores)
         best_prompt = max(
             population,
             key=lambda x: x["score"] if x["score"] is not None else -float("inf"),
@@ -1152,7 +1175,7 @@ class FullyEvolutionaryPromptOptimizer:
 
         # Get LLM to perform mutation
         try:
-            response = self.lm(instruction)
+            response = self._lm(instruction)
             mutated = response.strip()
 
             # Ensure placeholders are preserved
@@ -1164,7 +1187,7 @@ class FullyEvolutionaryPromptOptimizer:
 
             return mutated
 
-        except Exception as e:
+        except (RuntimeError, ConnectionError) as e:
             if self.debug:
                 print(f"Mutation failed: {e}")
             return prompt
