@@ -50,10 +50,12 @@ class FullyEvolutionaryPromptOptimizer:
     - Logging evolution history
     """
 
-    def __init__(self, metric: Callable, **kwargs):
+    def __init__(self, metric: Callable, lm=None, **kwargs):
         """Initialize the optimizer with configuration and state."""
         if not callable(metric):
             raise TypeError("Metric must be a callable function")
+            
+        self._lm = lm  # Protected member for language model
 
         self._validate_init_params(kwargs)
         self._initialize_config(metric, kwargs)
@@ -239,10 +241,9 @@ class FullyEvolutionaryPromptOptimizer:
     def _create_progress_bar(self):
         """Create and return a progress bar with error handling."""
         try:
-            return ProgressBar(
-                total=self.config.max_inference_calls,
-                progress=self.state.inference_count,
-            )
+            progress = ProgressBar(total=self.config.max_inference_calls)
+            progress.advance(self.state.inference_count)
+            return progress
         except (ValueError, TypeError, AttributeError) as e:
             if self.debug:
                 print(f"Error creating progress bar: {e}")
@@ -607,7 +608,7 @@ class FullyEvolutionaryPromptOptimizer:
             
             # Get LLM to perform mating
             try:
-                response = self.lm(instruction)
+                response = self._lm(instruction)  # Use protected member
                 child_prompt = response.strip()
                 
                 # Create new chromosome
@@ -620,7 +621,7 @@ class FullyEvolutionaryPromptOptimizer:
                     {"chromosome": new_chromosome, "score": None, "last_used": iteration}
                 )
                 
-            except Exception as e:
+            except (RuntimeError, ConnectionError) as e:
                 if self.debug:
                     print(f"Mating failed: {e}")
 
@@ -647,8 +648,12 @@ class FullyEvolutionaryPromptOptimizer:
             or self.max_inference_calls <= 0
         ):
             iteration += 1
-            population, recent_scores = self._process_generation(
-                population, program, trainset, iteration, recent_scores
+            population, recent_scores = self._process_population(
+                population=population,
+                program=program,
+                trainset=trainset,
+                iteration=iteration,
+                recent_scores=recent_scores
             )
 
             # Log progress periodically
