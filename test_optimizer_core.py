@@ -82,9 +82,8 @@ def test_mock_prediction(mock_metric: Callable[[Any, Any], float]) -> None:
     assert isinstance(pred.label, str)
 
     # Test multiple output fields
-    signature = dspy.Signature(
-        "text -> label,score", "Given text, generate label and score"
-    )
+    signature = dspy.Signature("text -> label,score")
+    signature.__doc__ = "Given text, generate label and score"
     pred = optimizer._create_mock_prediction(signature, {"text": "test"}, example)
     assert hasattr(pred, "label")
     assert hasattr(pred, "score")
@@ -92,9 +91,8 @@ def test_mock_prediction(mock_metric: Callable[[Any, Any], float]) -> None:
     assert isinstance(pred.score, str)
 
     # Test complex input
-    signature = dspy.Signature(
-        "text,metadata -> label", "Given text and metadata, generate label"
-    )
+    signature = dspy.Signature("text,metadata -> label")
+    signature.__doc__ = "Given text and metadata, generate label"
     pred = optimizer._create_mock_prediction(
         signature, {"text": "test", "metadata": {"source": "web"}}, example
     )
