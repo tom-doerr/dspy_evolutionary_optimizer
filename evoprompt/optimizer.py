@@ -67,9 +67,13 @@ class FullyEvolutionaryPromptOptimizer:
 
     def _initialize_state(self) -> None:
         """Initialize optimizer state variables."""
-        self.state = OptimizerState()
-        self.history = []
-        self.population = []
+        self.state = OptimizerState(
+            inference_count=0,
+            population=[],
+            history=[]
+        )
+        self.history = self.state.history
+        self.population = self.state.population
 
     def _log_mock_mode(self) -> None:
         """Log mock mode status if debug is enabled."""
@@ -146,7 +150,13 @@ class FullyEvolutionaryPromptOptimizer:
 
         Returns:
             Updated population after applying size limits and removing stale prompts
+
+        Raises:
+            ValueError: If population is empty
         """
+        if not population:
+            raise ValueError("Cannot update empty population")
+
         # Calculate recent score thresholds if scores exist
         if recent_scores:
             recent_scores_sorted = sorted(recent_scores)
@@ -1016,7 +1026,15 @@ class FullyEvolutionaryPromptOptimizer:
         Returns:
             A mutated version of the prompt with controlled intensity
 
+        Raises:
+            ValueError: If prompt is empty
+            TypeError: If prompt is not a string
         """
+        if not prompt:
+            raise ValueError("Cannot mutate empty prompt")
+        if not isinstance(prompt, str):
+            raise TypeError("Prompt must be a string")
+
         if not hasattr(self, "population"):
             self.population = []
 
