@@ -69,8 +69,8 @@ def test_optimizer_initialization(mock_metric: Callable[[Any, Any], float]) -> N
 
     # Verify state
     assert optimizer.state.inference_count == 0
-    assert optimizer.state.population is None
-    assert optimizer.state.history is None
+    assert optimizer.state.population == []
+    assert optimizer.state.history == []
 
 
 def test_parallel_initialization(metric_fixture: Callable[[Any, Any], float]) -> None:
@@ -210,8 +210,14 @@ def test_parameter_validation(metric_fixture: Callable[[Any, Any], float]) -> No
     assert optimizer.config.mutation_rate == 0.0
 
     # Test invalid parameters
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Generations must be positive"):
         FullyEvolutionaryPromptOptimizer(metric=metric_fixture, generations=0)
+    
+    with pytest.raises(ValueError, match="Mutation rate must be between 0 and 1"):
+        FullyEvolutionaryPromptOptimizer(metric=metric_fixture, mutation_rate=1.1)
+    
+    with pytest.raises(ValueError, match="Max population must be positive"):
+        FullyEvolutionaryPromptOptimizer(metric=metric_fixture, max_population=0)
     with pytest.raises(ValueError):
         FullyEvolutionaryPromptOptimizer(metric=metric_fixture, mutation_rate=1.1)
     with pytest.raises(ValueError):
@@ -772,6 +778,13 @@ def test_mutation_logic(metric_fixture: Callable[[Any, Any], float]) -> None:
     optimizer.config.mutation_rate = 0.0
     no_mutation = optimizer._mutate(original)
     assert no_mutation == original
+
+    # Test mutation with rate 1.0
+    optimizer.config.mutation_rate = 1.0
+    highly_mutated = optimizer._mutate(original)
+    assert "{{input}}" in highly_mutated
+    assert "{{output}}" in highly_mutated
+    assert len(highly_mutated) >= len(original)
 
     optimizer.config.mutation_rate = 1.0
     highly_mutated = optimizer._mutate(original)

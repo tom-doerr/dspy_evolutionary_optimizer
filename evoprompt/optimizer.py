@@ -52,10 +52,23 @@ class FullyEvolutionaryPromptOptimizer:
 
     def __init__(self, metric: Callable, **kwargs):
         """Initialize the optimizer with configuration and state."""
+        if not callable(metric):
+            raise TypeError("Metric must be a callable function")
+            
+        self._validate_init_params(kwargs)
         self._initialize_config(metric, kwargs)
         self.population = []
         self._initialize_state()
         self._log_mock_mode()
+
+    def _validate_init_params(self, params: dict) -> None:
+        """Validate initialization parameters."""
+        if "generations" in params and params["generations"] <= 0:
+            raise ValueError("Generations must be positive")
+        if "mutation_rate" in params and not 0 <= params["mutation_rate"] <= 1:
+            raise ValueError("Mutation rate must be between 0 and 1")
+        if "max_population" in params and params["max_population"] <= 0:
+            raise ValueError("Max population must be positive")
 
     def _initialize_config(self, metric: Callable, kwargs: dict) -> None:
         """Set up optimizer configuration."""
