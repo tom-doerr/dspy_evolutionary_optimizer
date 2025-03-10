@@ -202,7 +202,7 @@ class FullyEvolutionaryPromptOptimizer:
         try:
             return ProgressBar(
                 total=self.config.max_inference_calls,
-                completed=self.state.inference_count
+                completed=self.state.inference_count,
             )
         except (ValueError, TypeError, AttributeError) as e:
             if self.debug:
