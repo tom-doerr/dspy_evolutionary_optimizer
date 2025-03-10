@@ -25,21 +25,21 @@ def test_parallel_evaluation(mock_metric: Callable[[Any, Any], float]) -> None:
         dspy.Example(text="Great product!", label="positive"),
         dspy.Example(text="Awful service.", label="negative"),
     ]
-    
+
     # Test normal evaluation
     score = optimizer._evaluate(program, Chromosome(), examples)
     assert 0 <= score <= 1.0
-    
+
     # Test with single worker
     optimizer.config.max_workers = 1
     score = optimizer._evaluate(program, Chromosome(), examples)
     assert 0 <= score <= 1.0
-    
+
     # Test with many workers
     optimizer.config.max_workers = 100
     score = optimizer._evaluate(program, Chromosome(), examples)
     assert 0 <= score <= 1.0
-    
+
     # Test with mock mode
     optimizer.config.use_mock = True
     score = optimizer._evaluate(program, Chromosome(), examples)
