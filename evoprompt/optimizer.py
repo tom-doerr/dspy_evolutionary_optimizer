@@ -63,24 +63,7 @@ class FullyEvolutionaryPromptOptimizer:
         self.debug = self.config.debug
         self.use_mock = self.config.use_mock
         self.max_inference_calls = self.config.max_inference_calls
-        # Set direct references to commonly used config values
-        self.max_population = self.config.max_population
-        self.mutation_rate = self.config.mutation_rate
-        self.debug = self.config.debug
-        self.use_mock = self.config.use_mock
-        self.max_inference_calls = self.config.max_inference_calls
-        # Set direct references to commonly used config values
-        self.max_population = self.config.max_population
-        self.mutation_rate = self.config.mutation_rate
-        self.debug = self.config.debug
-        self.use_mock = self.config.use_mock
-        self.max_inference_calls = self.config.max_inference_calls
-        # Set direct references to commonly used config values
-        self.max_population = self.config.max_population
-        self.mutation_rate = self.config.mutation_rate
-        self.debug = self.config.debug
-        self.use_mock = self.config.use_mock
-        self.max_inference_calls = self.config.max_inference_calls
+        self.max_workers = self.config.max_workers
 
     def _initialize_state(self) -> None:
         """Initialize optimizer state variables."""

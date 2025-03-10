@@ -63,12 +63,20 @@ def test_model_error_handling():
         lm("Test message")
 
     # Test invalid input type
-    with pytest.raises(TypeError):
+    with pytest.raises(TypeError, match="Input must be a string"):
         lm(12345)
 
     # Test empty input
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Input cannot be empty"):
         lm("")
+
+    # Test invalid settings configuration
+    with pytest.raises(TypeError, match="Settings must be configured with a valid LM"):
+        dspy.settings.configure(lm="not_a_lm")
+
+    # Test invalid timeout value
+    with pytest.raises(ValueError, match="Timeout must be positive"):
+        dspy.settings.configure(lm=lm, timeout=-1)
     # Test connection timeout
     lm = dspy.LM("openrouter/google/gemini-2.0-flash-001")
     dspy.settings.configure(lm=lm, cache=False, timeout=0.001)  # Set very low timeout

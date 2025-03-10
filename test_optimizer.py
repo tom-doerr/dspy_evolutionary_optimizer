@@ -612,7 +612,7 @@ def test_parameter_validation(metric_fixture: Callable[[Any, Any], float]) -> No
         FullyEvolutionaryPromptOptimizer(mock_metric, max_workers=-1)
 
 
-def test_population_handling(metric_fixture: Callable[[Any, Any], float) -> None:
+def test_population_handling(metric_fixture: Callable[[Any, Any], float]) -> None:
     """Test population handling and evolution logic."""
     optimizer = FullyEvolutionaryPromptOptimizer(metric=metric_fixture)
 
