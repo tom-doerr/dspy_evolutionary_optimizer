@@ -89,7 +89,7 @@ class LintMonitor:
                             log_entry += f", {window}: {improvement:+.2f}"
                     
                     # Log to file and print
-                    with open(LOG_FILE, "a") as f:
+                    with open(LOG_FILE, "a", encoding="utf-8") as f:
                         f.write(log_entry + "\n")
                     print(log_entry)
                     
