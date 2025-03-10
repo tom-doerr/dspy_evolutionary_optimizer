@@ -56,7 +56,7 @@ def test_model_error_handling():
     # Test invalid model name
     with pytest.raises(ValueError, match="Invalid model name"):
         dspy.LM("invalid/model/name")
-    
+
     # Test empty input
     with pytest.raises(ValueError, match="Input cannot be empty"):
         lm("")
