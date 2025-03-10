@@ -1,11 +1,10 @@
-"""Core implementation of the evolutionary prompt optimizer."""
+"""Main implementation of the evolutionary prompt optimizer."""
 
 import copy
 import random
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from dataclasses import dataclass
-from statistics import mean
+from .core import EvolutionaryCore, OptimizerConfig, OptimizerState
 from typing import List, Dict, Any, Callable, Tuple, Optional
 
 # Third-party imports
@@ -54,7 +53,7 @@ class FullyEvolutionaryPromptOptimizer:
         """Initialize the optimizer with configuration and state."""
         if not callable(metric):
             raise TypeError("Metric must be a callable function")
-            
+
         self._lm = lm  # Protected member for language model
 
         self._validate_init_params(kwargs)
@@ -346,30 +345,29 @@ class FullyEvolutionaryPromptOptimizer:
         """Initialize the starting population with chromosomes."""
         # Initialize task chromosome
         task_chromosome = Chromosome(
-            task_parts=["{{input}}", "{{output}}"],
-            chromosome_type="task"
+            task_parts=["{{input}}", "{{output}}"], chromosome_type="task"
         )
-        
+
         # Initialize mutation chromosome
         mutation_chromosome = Chromosome(
             mutation_parts=[
                 "Modify the prompt to improve its performance",
                 "Add or remove instructions as needed",
-                "Keep the core meaning intact"
+                "Keep the core meaning intact",
             ],
-            chromosome_type="mutation"
+            chromosome_type="mutation",
         )
-        
+
         # Initialize mating chromosome
         mating_chromosome = Chromosome(
             mating_parts=[
                 "Combine the best aspects of both prompts",
                 "Maintain coherence and clarity",
-                "Create a new effective prompt"
+                "Create a new effective prompt",
             ],
-            chromosome_type="mating"
+            chromosome_type="mating",
         )
-        
+
         self.population = [
             {
                 "prompt": task_chromosome.to_prompt(),
@@ -388,7 +386,7 @@ class FullyEvolutionaryPromptOptimizer:
                 "chromosome": mating_chromosome,
                 "score": None,
                 "last_used": 0,
-            }
+            },
         ]
         return self.population
 
@@ -578,10 +576,9 @@ class FullyEvolutionaryPromptOptimizer:
         """Mate high performing chromosomes using mating chromosome."""
         # Get mating chromosome
         mating_chromosome = next(
-            (c for c in population if c["chromosome"].chromosome_type == "mating"),
-            None
+            (c for c in population if c["chromosome"].chromosome_type == "mating"), None
         )
-        
+
         if not mating_chromosome:
             return
 
@@ -596,7 +593,7 @@ class FullyEvolutionaryPromptOptimizer:
 
         if high_performers:
             mate = random.choice(high_performers)
-            
+
             # Create mating instruction
             mating_prompt = mating_chromosome["prompt"]
             instruction = (
@@ -605,22 +602,25 @@ class FullyEvolutionaryPromptOptimizer:
                 f"Parent 2: {mate['prompt']}\n"
                 f"Child Prompt:"
             )
-            
+
             # Get LLM to perform mating
             try:
                 response = self._lm(instruction)  # Use protected member
                 child_prompt = response.strip()
-                
+
                 # Create new chromosome
                 new_chromosome = Chromosome(
-                    task_parts=child_prompt.split(),
-                    chromosome_type="task"
+                    task_parts=child_prompt.split(), chromosome_type="task"
                 )
-                
+
                 population.append(
-                    {"chromosome": new_chromosome, "score": None, "last_used": iteration}
+                    {
+                        "chromosome": new_chromosome,
+                        "score": None,
+                        "last_used": iteration,
+                    }
                 )
-                
+
             except (RuntimeError, ConnectionError) as e:
                 if self.debug:
                     print(f"Mating failed: {e}")
@@ -653,7 +653,7 @@ class FullyEvolutionaryPromptOptimizer:
                 program=program,
                 trainset=trainset,
                 iteration=iteration,
-                recent_scores=recent_scores
+                recent_scores=recent_scores,
             )
 
             # Log progress periodically
@@ -1135,31 +1135,35 @@ class FullyEvolutionaryPromptOptimizer:
 
         # Get mutation chromosome
         mutation_chromosome = next(
-            (c for c in self.population if c["chromosome"].chromosome_type == "mutation"),
-            None
+            (
+                c
+                for c in self.population
+                if c["chromosome"].chromosome_type == "mutation"
+            ),
+            None,
         )
-        
+
         if not mutation_chromosome:
             return prompt
 
         # Create mutation instruction
         mutation_prompt = mutation_chromosome["prompt"]
         instruction = f"{mutation_prompt}\nOriginal Prompt: {prompt}\nMutated Prompt:"
-        
+
         # Get LLM to perform mutation
         try:
             response = self.lm(instruction)
             mutated = response.strip()
-            
+
             # Ensure placeholders are preserved
             mutated = self._ensure_placeholders(mutated)
-            
+
             # Limit size
             if len(mutated.split()) > 50:
                 mutated = " ".join(mutated.split()[:50])
-                
+
             return mutated
-            
+
         except Exception as e:
             if self.debug:
                 print(f"Mutation failed: {e}")
