@@ -32,7 +32,7 @@ def basic_optimizer_fixture(
 
 @pytest.fixture
 def mock_signature() -> dspy.Signature:
-    signature = dspy.Signature("text -> label", "Given text, generate a label")
+    signature = dspy.Signature("text -> label")
     signature.__doc__ = "Given text, generate a label"
     signature.__doc__ = "Given text, generate a label"
     return signature
@@ -89,8 +89,8 @@ def test_population_initialization(
     assert population[0]["score"] is None
 
 
-def test_optimizer_with_mock_mode(metric_fixture: Callable[[Any, Any], float]) -> None:
-    optimizer = FullyEvolutionaryPromptOptimizer(metric=_metric_fixture, use_mock=True)
+def test_optimizer_with_mock_mode() -> None:
+    optimizer = FullyEvolutionaryPromptOptimizer(metric=lambda x,y: 1.0, use_mock=True)
     assert optimizer.config.use_mock is True
 
 
@@ -180,11 +180,11 @@ def _test_parameter_validation_cases(
         optimizer("not_a_function", use_mock="not_a_boolean")
 
 
-def _test_generations_validation(optimizer):
+def _test_generations_validation(optimizer, metric):
     with pytest.raises(ValueError):
-        optimizer(metric_fixture, generations=0)
+        optimizer(metric, generations=0)
     with pytest.raises(ValueError):
-        optimizer(metric_fixture, generations=-1)
+        optimizer(metric, generations=-1)
 
 
 def _test_mutation_rate_validation(optimizer):
@@ -194,7 +194,23 @@ def _test_mutation_rate_validation(optimizer):
         optimizer(metric_fixture, mutation_rate=-0.1)
 
 
-def test_parameter_validation(metric_fixture: Callable[[Any, Any], float]) -> None:
+def test_parameter_validation_basic(metric_fixture: Callable[[Any, Any], float]) -> None:
+    """Test basic parameter validation"""
+    optimizer = FullyEvolutionaryPromptOptimizer(
+        metric=metric_fixture,
+        generations=5,
+        mutation_rate=0.5,
+        growth_rate=0.3,
+        max_population=20,
+        debug=True,
+        use_mock=True,
+    )
+    assert optimizer.config.generations == 5
+    assert optimizer.config.mutation_rate == 0.5
+    assert optimizer.config.use_mock is True
+
+def test_parameter_validation_edge_cases(metric_fixture: Callable[[Any, Any], float]) -> None:
+    """Test edge case parameter validation"""
     """Test parameter validation in optimizer initialization."""
     # Test valid parameters
     optimizer = FullyEvolutionaryPromptOptimizer(
@@ -819,6 +835,7 @@ def test_mutation_logic() -> None:
 
     # Test basic mutation
     original = "Given {{input}}, generate {{output}}"
+    # pylint: disable=protected-access
     mutated = optimizer._mutate(original)
     assert "{{input}}" in mutated
     assert "{{output}}" in mutated

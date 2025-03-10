@@ -30,9 +30,7 @@ def main() -> None:
     print("\nTesting with DSPy Predict...")
 
     # Define a simple signature
-    signature = dspy.Signature(
-        "message -> response", "Given message, generate response"
-    )
+    signature = dspy.Signature("message -> response")
     signature.__doc__ = "Given a message, generate a response"
     signature.__doc__ = "Given a message, generate a response"
 

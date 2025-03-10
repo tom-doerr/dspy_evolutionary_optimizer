@@ -18,7 +18,7 @@ def mock_metric() -> Callable[[Any, Any], float]:
 def test_parallel_evaluation(mock_metric: Callable[[Any, Any], float]) -> None:
     # Test normal case
     optimizer = FullyEvolutionaryPromptOptimizer(metric=mock_metric, max_workers=2)
-    signature = dspy.Signature("text -> label", "Given text, generate label")
+    signature = dspy.Signature("text -> label")
     signature.__doc__ = "Given text, generate a label"
     program = dspy.Predict(signature)
     
@@ -77,7 +77,9 @@ def test_mock_prediction(mock_metric: Callable[[Any, Any], float]) -> None:
     optimizer = FullyEvolutionaryPromptOptimizer(metric=mock_metric)
     optimizer.config.use_mock = True  # Set mock mode through config
     signature = dspy.Signature("text -> label", "Given text, generate a label")
+    # pylint: disable=protected-access
     MockPrediction = optimizer._create_mock_prediction_class()
+    assert MockPrediction is not None
     example = dspy.Example(text="Great product!", label="positive")
     # Access protected member for testing purposes
     # pylint: disable=protected-access
