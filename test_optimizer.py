@@ -32,7 +32,7 @@ def basic_optimizer_fixture(
 
 @pytest.fixture
 def mock_signature() -> dspy.Signature:
-    signature = dspy.Signature("text -> label")
+    signature = dspy.Signature("text -> label", "Given text, generate a label")
     signature.__doc__ = "Given text, generate a label"
     signature.__doc__ = "Given text, generate a label"
     return signature
@@ -74,7 +74,7 @@ def test_optimizer_initialization(mock_metric: Callable[[Any, Any], float]) -> N
 
 
 def test_parallel_initialization(metric_fixture: Callable[[Any, Any], float]) -> None:
-    optimizer = FullyEvolutionaryPromptOptimizer(metric=_metric_fixture, max_workers=4)
+    optimizer = FullyEvolutionaryPromptOptimizer(metric=metric_fixture, max_workers=4)
     assert optimizer.config.max_workers == 4
 
 
@@ -179,6 +179,18 @@ def _test_parameter_validation_cases(
     with pytest.raises(TypeError):
         optimizer("not_a_function", use_mock="not_a_boolean")
 
+
+def _test_generations_validation(optimizer):
+    with pytest.raises(ValueError):
+        optimizer(metric_fixture, generations=0)
+    with pytest.raises(ValueError):
+        optimizer(metric_fixture, generations=-1)
+
+def _test_mutation_rate_validation(optimizer):
+    with pytest.raises(ValueError):
+        optimizer(metric_fixture, mutation_rate=1.1)
+    with pytest.raises(ValueError):
+        optimizer(metric_fixture, mutation_rate=-0.1)
 
 def test_parameter_validation(metric_fixture: Callable[[Any, Any], float]) -> None:
     # Remove duplicate docstring
@@ -566,7 +578,7 @@ def test_parameter_validation(metric_fixture: Callable[[Any, Any], float]) -> No
 
     # Test invalid mutation rate
     with pytest.raises(ValueError):
-        FullyEvolutionaryPromptOptimizer(mock_metric, mutation_rate=1.1)
+        FullyEvolutionaryPromptOptimizer(metric_fixture, mutation_rate=1.1)
     with pytest.raises(ValueError):
         FullyEvolutionaryPromptOptimizer(mock_metric, mutation_rate=-0.1)
 
@@ -663,6 +675,7 @@ def test_population_handling(metric_fixture: Callable[[Any, Any], float]) -> Non
         optimizer._update_population("not a list", iteration=1, recent_scores=[])
 
     # Test valid population initialization
+    # pylint: disable=protected-access
     population = optimizer._initialize_population()
     assert len(population) == 1
     assert isinstance(population[0]["chromosome"], Chromosome)
@@ -795,7 +808,7 @@ def test_population_handling(metric_fixture: Callable[[Any, Any], float]) -> Non
     assert "chromosome" in selected
 
 
-def test_mutation_logic(metric_fixture: Callable[[Any, Any], float]) -> None:
+def test_mutation_logic() -> None:
     optimizer = FullyEvolutionaryPromptOptimizer(metric=_metric_fixture)
 
     # Test basic mutation
@@ -809,13 +822,6 @@ def test_mutation_logic(metric_fixture: Callable[[Any, Any], float]) -> None:
     optimizer.config.mutation_rate = 0.0
     no_mutation = optimizer._mutate(original)
     assert no_mutation == original
-
-    # Test mutation with rate 1.0
-    optimizer.config.mutation_rate = 1.0
-    highly_mutated = optimizer._mutate(original)
-    assert "{{input}}" in highly_mutated
-    assert "{{output}}" in highly_mutated
-    assert len(highly_mutated) >= len(original)
 
     # Test mutation with rate 1.0
     optimizer.config.mutation_rate = 1.0
