@@ -186,11 +186,13 @@ def _test_generations_validation(optimizer):
     with pytest.raises(ValueError):
         optimizer(metric_fixture, generations=-1)
 
+
 def _test_mutation_rate_validation(optimizer):
     with pytest.raises(ValueError):
         optimizer(metric_fixture, mutation_rate=1.1)
     with pytest.raises(ValueError):
         optimizer(metric_fixture, mutation_rate=-0.1)
+
 
 def test_parameter_validation(metric_fixture: Callable[[Any, Any], float]) -> None:
     # Remove duplicate docstring
@@ -224,10 +226,10 @@ def test_parameter_validation(metric_fixture: Callable[[Any, Any], float]) -> No
     # Test invalid parameters
     with pytest.raises(ValueError, match="Generations must be positive"):
         FullyEvolutionaryPromptOptimizer(metric=metric_fixture, generations=0)
-    
+
     with pytest.raises(ValueError, match="Mutation rate must be between 0 and 1"):
         FullyEvolutionaryPromptOptimizer(metric=metric_fixture, mutation_rate=1.1)
-    
+
     with pytest.raises(ValueError, match="Max population must be positive"):
         FullyEvolutionaryPromptOptimizer(metric=metric_fixture, max_population=0)
 
