@@ -341,7 +341,9 @@ class FullyEvolutionaryPromptOptimizer:
         ]
         return self.population
 
-    def _process_population(self, population, program, trainset, iteration, recent_scores):
+    def _process_population(
+        self, population, program, trainset, iteration, recent_scores
+    ):
         """Process one iteration of population evolution.
 
         Args:
@@ -561,7 +563,9 @@ class FullyEvolutionaryPromptOptimizer:
             or self.max_inference_calls <= 0
         ):
             iteration += 1
-            population, recent_scores = self._process_generation(population, program, trainset, iteration, recent_scores)
+            population, recent_scores = self._process_generation(
+                population, program, trainset, iteration, recent_scores
+            )
 
             # Log progress periodically
             if iteration % 10 == 0:
