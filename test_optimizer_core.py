@@ -21,6 +21,10 @@ def test_parallel_evaluation(mock_metric: Callable[[Any, Any], float]) -> None:
     signature = dspy.Signature("text -> label", "Given text, generate label")
     signature.__doc__ = "Given text, generate a label"
     program = dspy.Predict(signature)
+    
+    # Initialize LM for testing
+    lm = dspy.LM("openrouter/google/gemini-2.0-flash-001")
+    dspy.settings.configure(lm=lm, cache=False)
     examples = [
         dspy.Example(text="Great product!", label="positive"),
         dspy.Example(text="Awful service.", label="negative"),

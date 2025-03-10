@@ -195,7 +195,7 @@ def _test_mutation_rate_validation(optimizer):
 
 
 def test_parameter_validation(metric_fixture: Callable[[Any, Any], float]) -> None:
-    # Remove duplicate docstring
+    """Test parameter validation in optimizer initialization."""
     # Test valid parameters
     optimizer = FullyEvolutionaryPromptOptimizer(
         metric=metric_fixture,
@@ -206,6 +206,10 @@ def test_parameter_validation(metric_fixture: Callable[[Any, Any], float]) -> No
         debug=True,
         use_mock=True,
     )
+    
+    # Test invalid metric type
+    with pytest.raises(TypeError, match="Metric must be callable"):
+        FullyEvolutionaryPromptOptimizer(metric="not_a_function")
     assert optimizer.config.generations == 5
     assert optimizer.config.mutation_rate == 0.5
     assert optimizer.config.use_mock is True
