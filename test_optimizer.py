@@ -318,10 +318,10 @@ def test_parameter_validation(metric_fixture: Callable[[Any, Any], float]) -> No
     # Test invalid parameters
     with pytest.raises(ValueError, match="Generations must be positive"):
         FullyEvolutionaryPromptOptimizer(metric=metric_fixture, generations=0)
-    
+
     with pytest.raises(ValueError, match="Mutation rate must be between 0 and 1"):
         FullyEvolutionaryPromptOptimizer(metric=metric_fixture, mutation_rate=1.1)
-    
+
     with pytest.raises(ValueError, match="Max population must be positive"):
         FullyEvolutionaryPromptOptimizer(metric=metric_fixture, max_population=0)
     with pytest.raises(ValueError):
